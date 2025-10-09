@@ -14,15 +14,17 @@ import io.ktor.server.resources.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.slf4j.event.*
 
 fun Application.configureSerialization() {
+    // 2. Configurar serialización JSON
     install(ContentNegotiation) {
-        json()
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+            ignoreUnknownKeys = true
+        })
     }
-    routing {
-        get("/json/kotlinx-serialization") {
-            call.respond(mapOf("hello" to "world"))
-        }
-    }
+
 }

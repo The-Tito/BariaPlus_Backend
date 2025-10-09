@@ -1,5 +1,6 @@
 package application.dto.AuthDto
 
+import domain.models.Doctor
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
 
@@ -25,7 +26,33 @@ data class RegisterDoctorResponse(
 )
 
 @Serializable
+data class LoginRequest(val email: String, val password: String)
+
+@Serializable
+data class LoginResponse(
+    val success: Boolean,
+    val message: String,
+    val token: String? = null,
+    val doctor: DoctorInfo? = null,
+)
+
+
+/**
+ * Información básica del doctor en la respuesta
+ */
+@Serializable
+data class DoctorInfo(
+    val id: Int,
+    val firstName: String,
+    val lastName: String,
+    val email: String,
+    val professionalLicenseNumber: String
+)
+
+
+@Serializable
 data class ErrorResponse(
     val success: Boolean = false,
     val message: String,
 )
+

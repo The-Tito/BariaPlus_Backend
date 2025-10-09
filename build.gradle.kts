@@ -30,13 +30,14 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:0.44.1")
     implementation("com.zaxxer:HikariCP:5.1.0")
 
-    // Security
-    implementation(libs.ktor.server.auth)
-    implementation(libs.ktor.server.auth.jwt)
+    // JWT Authentication
+    implementation("io.ktor:ktor-server-auth:2.3.7")
+    implementation("io.ktor:ktor-server-auth-jwt:2.3.7")
+    implementation("com.auth0:java-jwt:4.4.0")
     implementation("org.mindrot:jbcrypt:0.4")
 
     // ENV
-    implementation("de.sharpmind.ktor:ktor-env-config:2.1.1")
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 
 
 }

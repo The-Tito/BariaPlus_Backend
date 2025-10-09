@@ -1,5 +1,6 @@
 package com.AntonioSelvas.presentation
 
+import app.AppModule
 import application.services.PasswordService
 import application.usecase.RegisterDoctorUseCase
 import com.AntonioSelvas.configureMonitoring
@@ -26,18 +27,6 @@ fun Application.module() {
 
     DatabaseFactory.init(DatabaseConfig())
 
-    // 2. Configurar serialización JSON
-    install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-            ignoreUnknownKeys = true
-        })
-    }
-    val doctorRepository = DoctorRepositoryImpl()
-    val passwordService = PasswordService()
-    val registerDoctorUseCase = RegisterDoctorUseCase(doctorRepository, passwordService)
-
     routing {
         // Ruta de health check
         get("/health") {
@@ -45,11 +34,11 @@ fun Application.module() {
         }
 
         // Rutas de autenticación
-        authRoutes(registerDoctorUseCase)
+        authRoutes(AppModule.registerDoctorUseCase, AppModule.loginDoctorUseCase)
     }
 
     configureSecurity()
-//    configureSerialization()
+    configureSerialization()
     configureMonitoring()
     configureRouting()
 }

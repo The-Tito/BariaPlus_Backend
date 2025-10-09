@@ -1,14 +1,19 @@
 package infrastructure.database
 
+import io.github.cdimascio.dotenv.Dotenv
+import io.github.cdimascio.dotenv.dotenv
+
 
 class DatabaseConfig (
-    val jdbcUrl: String = System.getenv("DB_URL")
-        ?: "jdbc:postgresql://localhost:5432/bariaplus_bd",
-    val username: String = System.getenv("DB_USER")
-        ?: "postgres",
-    val password: String = System.getenv("DB_PASSWORD")
-        ?: "FULL4k1080",
+    val dotenv: Dotenv = dotenv {
+        ignoreIfMissing = true
+    },
+
+    val jdbcUrl: String = dotenv["DB_URL"],
+    val username: String = dotenv["DB_USER"],
+    val password: String = dotenv["DB_PASSWORD"],
     val driver: String = "org.postgresql.Driver",
     val maxPoolSize: Int = 10,
 ) {
+
 }
