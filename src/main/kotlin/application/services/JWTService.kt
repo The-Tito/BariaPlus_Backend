@@ -28,7 +28,7 @@ class JWTService{
             .sign(algorithm)
     }
 
-    fun verifier(): JWTVerifier {
+    fun createVerifier(): JWTVerifier {
         return JWT
             .require(algorithm)
             .withAudience(audience)

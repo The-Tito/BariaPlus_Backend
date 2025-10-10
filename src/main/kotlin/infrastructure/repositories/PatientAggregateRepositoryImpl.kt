@@ -1,0 +1,88 @@
+package infrastructure.repositories
+
+import domain.interfaces.PatientAggregateInterface
+import domain.models.PatientAggregate
+import infrastructure.database.DatabaseFactory.dbQuery
+import infrastructure.database.tables.AllergiesTable
+import infrastructure.database.tables.DiseasesTable
+import infrastructure.database.tables.MedicalHistoriesTable
+import infrastructure.database.tables.MedicalRecordsTable
+import infrastructure.database.tables.PatientsTable
+import infrastructure.database.tables.PatientsTable.statusId
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.transactions.transaction
+
+class PatientAggregateRepositoryImpl: PatientAggregateInterface {
+    override suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregate = dbQuery {
+        transaction {
+            try {
+
+                val patientId = PatientsTable.insert {
+                    it[firstName] = aggregate.patient.firstName
+                    it[lastName] = aggregate.patient.lastName
+                    it[dateOfBirth] = aggregate.patient.dateOfBirth
+                    it[entryDate] = aggregate.patient.entryDate
+                    it[emergencyNumber] = aggregate.patient.emergencyNumber
+                    it[doctorId] = aggregate.patient.doctorId
+                    it[genderId] = aggregate.patient.genderId
+                    it[statusId] = aggregate.patient.statusId
+                } get PatientsTable.id
+
+                val savedPatient = aggregate.patient.copy(id = patientId)
+
+                val medicalRecordId = MedicalRecordsTable.insert {
+                    it[this.patientId] = patientId
+                    it[creationDate] = aggregate.medicalRecord.creationDate
+                    it[statusId] = aggregate.medicalRecord.statusId
+                }get MedicalRecordsTable.id
+
+                val savedMedicalRecord = aggregate.medicalRecord.copy(
+                    id = medicalRecordId,
+                    patientId = patientId,
+                )
+
+                val savedAllergies = aggregate.allergies.map { allergy ->
+                    val allergyId = AllergiesTable.insert {
+                        it[name] = allergy.name
+                        it[allergicReaction] = allergy.allergicReaction
+                        it[this.patientId] = patientId
+                    } get AllergiesTable.id
+
+                    allergy.copy(id = allergyId, patientId = patientId)
+                }
+
+                val savedDiseases = aggregate.diseases.map { disease ->
+                    val diseaseId = DiseasesTable.insert {
+                        it[name] = disease.name
+                        it[actualState] = disease.actualState
+                        it[this.patientId] = patientId
+                    }get DiseasesTable.id
+
+                    disease.copy(id = diseaseId, patientId = patientId)
+                }
+
+                val savedHistories = aggregate.medicalHistories.map { history ->
+                    val historyId = MedicalHistoriesTable.insert {
+                        it[name] = history.name
+                        it[detectionDate] = history.detectionDate
+                        it[historyTypesId] = history.historyTypeId
+                        it[this.patientId] = patientId
+                    } get MedicalHistoriesTable.id
+
+                    history.copy(id = historyId, patientId = patientId)
+                }
+
+                PatientAggregate(
+                    patient = savedPatient,
+                    medicalRecord = savedMedicalRecord,
+                    allergies = savedAllergies,
+                    diseases = savedDiseases,
+                    medicalHistories = savedHistories
+                )
+            }catch (e: Exception) {
+                // Si algo falla, Exposed hace rollback automático
+                throw e
+        }
+    }
+}
+}
