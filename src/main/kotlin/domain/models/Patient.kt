@@ -24,7 +24,7 @@ data class Allergy(
 data class Disease(
     val id: Int? = null,
     val name: String,
-    val actualState: String,
+    val actualStateId: Int,
     val patientId: Int? = null,
 )
 
@@ -40,7 +40,6 @@ data class MedicalRecord(
     val id: Int? = null,
     val patientId: Int,
     val creationDate: LocalDate,
-    val statusId: Int,
 
 )
 data class PatientAggregate(

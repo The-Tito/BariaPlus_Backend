@@ -6,7 +6,6 @@ import application.dto.CreatePatientResponse
 import application.dto.DiseaseRequest
 import application.dto.MedicalHistoryRequest
 import application.dto.PatientInfoDTO
-import domain.interfaces.AllergyInterface
 import domain.interfaces.PatientAggregateInterface
 import domain.models.Allergy
 import domain.models.Disease
@@ -14,7 +13,6 @@ import domain.models.MedicalHistory
 import domain.models.MedicalRecord
 import domain.models.Patient
 import domain.models.PatientAggregate
-import io.ktor.client.request.request
 import java.time.LocalDate
 
 
@@ -72,8 +70,7 @@ class CreatePatientUseCase(
 
     private fun buildMedicalRecord() = MedicalRecord(
         patientId = 0,
-        creationDate = LocalDate.now(),
-        statusId = 1,
+        creationDate = LocalDate.now()
     )
 
     private fun buildAllergies(requests: List<AllergyRequest>) = requests.map {
@@ -87,7 +84,7 @@ class CreatePatientUseCase(
         requests.map {
             Disease(
                 name = it.name.trim(),
-                actualState = it.actualState.trim()
+                actualStateId = it.actualStateId
             )
         }
 

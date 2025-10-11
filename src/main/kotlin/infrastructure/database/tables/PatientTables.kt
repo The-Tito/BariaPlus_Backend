@@ -4,17 +4,15 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.date
 
 //checar el nombre de esta tabla
-object StatusPatientsTable : Table("status_patients") {
+object StatusPatientsTable : Table("patient_status") {
     val id = integer("id").autoIncrement()
     val name = varchar("name", 10)
 
     override val primaryKey = PrimaryKey(id)
 }
-object StatusRecordsTable : Table("status_records") {
+object actualStateTable: Table("actual_state") {
     val id = integer("id").autoIncrement()
-    val name = varchar("name", 10)
-
-    override val primaryKey = PrimaryKey(id)
+    val name = varchar("name", 20)
 }
 
 /*Pacientes*/
@@ -61,7 +59,7 @@ object MedicalHistoriesTable : Table("medical_histories") {
 object DiseasesTable : Table("diseases") {
     val id = integer("id").autoIncrement()
     val name = varchar("name", 100)
-    val actualState = varchar("actual_state", 30)
+    val actualState = integer("actual_state_id").references(actualStateTable.id)
     val patientId = integer("patient_id").references(PatientsTable.id)
 
     override val primaryKey = PrimaryKey(id)
@@ -71,7 +69,6 @@ object MedicalRecordsTable : Table("medical_records") {
     val id = integer("id").autoIncrement()
     val patientId = integer("patient_id").uniqueIndex().references(PatientsTable.id)
     val creationDate = date("creation_date")
-    val statusId = integer("status").references(StatusRecordsTable.id) //Agregar status
 
     override val primaryKey = PrimaryKey(id)
 }

@@ -1,7 +1,6 @@
 package application.dto
 
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
 
 @Serializable
 data class CreatePatientRequest(
@@ -25,7 +24,7 @@ data class AllergyRequest(
 @Serializable
 data class DiseaseRequest(
     val name: String,
-    val actualState: String,
+    val actualStateId: Int,
 )
 
 @Serializable

@@ -1,6 +1,5 @@
 package domain.models
 
-import org.jetbrains.exposed.sql.javatime.Date
 import java.time.LocalDate
 
 data class Doctor(

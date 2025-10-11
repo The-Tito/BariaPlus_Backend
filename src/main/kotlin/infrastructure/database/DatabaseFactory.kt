@@ -11,7 +11,6 @@ import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
 import infrastructure.database.tables.StatusPatientsTable
-import infrastructure.database.tables.StatusRecordsTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils

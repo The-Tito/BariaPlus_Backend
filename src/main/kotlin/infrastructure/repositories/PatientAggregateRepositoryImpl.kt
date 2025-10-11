@@ -8,7 +8,6 @@ import infrastructure.database.tables.DiseasesTable
 import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
-import infrastructure.database.tables.PatientsTable.statusId
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -33,7 +32,6 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                 val medicalRecordId = MedicalRecordsTable.insert {
                     it[this.patientId] = patientId
                     it[creationDate] = aggregate.medicalRecord.creationDate
-                    it[statusId] = aggregate.medicalRecord.statusId
                 }get MedicalRecordsTable.id
 
                 val savedMedicalRecord = aggregate.medicalRecord.copy(
@@ -54,7 +52,7 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                 val savedDiseases = aggregate.diseases.map { disease ->
                     val diseaseId = DiseasesTable.insert {
                         it[name] = disease.name
-                        it[actualState] = disease.actualState
+                        it[actualState] = disease.actualStateId
                         it[this.patientId] = patientId
                     }get DiseasesTable.id
 
