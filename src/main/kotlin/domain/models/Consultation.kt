@@ -30,7 +30,7 @@ data class MedicalConsultation(
     val medicalRecordId: Int
     )
 
-data class Note(
+data class Notes(
     val id: Int? = null,
     val description: String,
     val medicalConsultationId: Int? = null,
@@ -61,7 +61,7 @@ data class Review(
 
 data class ConsultationAggregate(
     val consultation: MedicalConsultation,
-    val notes: List<Note> = emptyList(),
+    val notes: List<Notes> = emptyList(),
     val healthIndicators: List<HealthIndicators> = emptyList(),
     val metricValue: List<MetricValue> = emptyList(),
 )
