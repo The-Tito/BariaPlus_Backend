@@ -3,12 +3,11 @@ package app
 import application.services.JWTService
 import application.services.PasswordService
 import application.usecase.CreatePatientUseCase
-import application.usecase.LoginDoctorUseCase
-import application.usecase.RegisterDoctorUseCase
+import application.usecase.DoctorUseCase.LoginDoctorUseCase
+import application.usecase.DoctorUseCase.RegisterDoctorUseCase
+import application.usecase.DoctorUseCase.UpdateDoctorUseCase
 import infrastructure.repositories.DoctorRepositoryImpl
 import infrastructure.repositories.PatientAggregateRepositoryImpl
-import io.ktor.server.routing.Route
-import presentation.routes.authRoutes.*
 
 object AppModule {
 
@@ -20,6 +19,7 @@ object AppModule {
     val registerDoctorUseCase by lazy { RegisterDoctorUseCase(doctorRepository, passwordService) }
     val loginDoctorUseCase by lazy { LoginDoctorUseCase(doctorRepository, passwordService, jwtService) }
     val createPatientUseCase by lazy { CreatePatientUseCase(patientAggregateRepository) }
+    val doctorUseCase by lazy { UpdateDoctorUseCase(doctorRepository, passwordService) }
 
     val doctorRepositoryForRoutes by lazy { doctorRepository }
 }

@@ -44,7 +44,7 @@ data class HealthIndicators(
     val medicalConsultationId: Int? = null,
 )
 
-data class MetricValue(
+data class MetricsValue(
     val id: Int? = null,
     val metricsCatalogId: Int,
     val value: BigDecimal,
@@ -63,7 +63,7 @@ data class ConsultationAggregate(
     val consultation: MedicalConsultation,
     val notes: List<Notes> = emptyList(),
     val healthIndicators: List<HealthIndicators> = emptyList(),
-    val metricValue: List<MetricValue> = emptyList(),
+    val metricsValue: List<MetricsValue> = emptyList(),
 )
 
 data class ConsultationComplete(

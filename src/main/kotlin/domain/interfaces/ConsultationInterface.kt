@@ -6,7 +6,7 @@ import domain.models.ConsultationComplete
 import domain.models.HealthIndicatorWithType
 import domain.models.HealthIndicators
 import domain.models.MedicalConsultation
-import domain.models.MetricValue
+import domain.models.MetricsValue
 import domain.models.MetricValueWithCatalog
 import domain.models.MetricsCatalog
 import domain.models.NoteWithCategory
@@ -33,7 +33,7 @@ interface HealthIndicatorInterface {
 }
 
 interface MetricsValue{
-    suspend fun save(metrics: List<MetricValue>): List<MetricValue>
+    suspend fun save(metrics: List<MetricsValue>): List<MetricsValue>
     suspend fun findById(metricId: Int): List<MetricValueWithCatalog>
 }
 

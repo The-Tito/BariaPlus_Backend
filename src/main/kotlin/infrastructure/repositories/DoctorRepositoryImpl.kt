@@ -6,8 +6,10 @@ import infrastructure.database.DatabaseFactory.dbQuery
 import infrastructure.database.tables.DoctorsTable
 import infrastructure.database.tables.DoctorsTable.genderId
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.update
 
 class DoctorRepositoryImpl : DoctorInterface {
 
@@ -38,6 +40,21 @@ class DoctorRepositoryImpl : DoctorInterface {
         } get DoctorsTable.id
 
         doctor.copy(id = insertedId)
+    }
+
+    override suspend fun update(doctor: Doctor): Doctor = dbQuery {
+        DoctorsTable.update({ DoctorsTable.id eq doctor.id!!}){
+            it[first_name] = doctor.firstName
+            it[last_name] = doctor.lastName
+            it[professional_license_number] = doctor.professionalLicense
+            it[employment_start_date] = doctor.employmentStart
+            it[graduation_institution] = doctor.graduationInstitution
+            it[current_workplace] = doctor.currentWorkplace
+            it[email] = doctor.email
+            it[password_hash] = doctor.password
+            it[genderId] = doctor.gender
+        }
+        doctor
     }
 
     override suspend fun findByEmail(email: String): Doctor? = dbQuery {

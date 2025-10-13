@@ -3,8 +3,8 @@ package presentation.routes.authRoutes
 import application.dto.AuthDto.ErrorResponse
 import application.dto.AuthDto.LoginRequest
 import application.dto.AuthDto.RegisterDoctorRequest
-import application.usecase.LoginDoctorUseCase
-import application.usecase.RegisterDoctorUseCase
+import application.usecase.DoctorUseCase.LoginDoctorUseCase
+import application.usecase.DoctorUseCase.RegisterDoctorUseCase
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond

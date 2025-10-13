@@ -1,9 +1,8 @@
-package application.usecase
+package application.usecase.DoctorUseCase
 
 import application.dto.AuthDto.DoctorInfo
 import application.dto.AuthDto.LoginRequest
 import application.dto.AuthDto.LoginResponse
-import application.dto.AuthDto.RegisterDoctorRequest
 import application.services.JWTService
 import application.services.PasswordService
 import domain.interfaces.DoctorInterface

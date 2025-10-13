@@ -1,4 +1,4 @@
-package application.usecase
+package application.usecase.DoctorUseCase
 
 import application.dto.AuthDto.RegisterDoctorRequest
 import application.dto.AuthDto.RegisterDoctorResponse

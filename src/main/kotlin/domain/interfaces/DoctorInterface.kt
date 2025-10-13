@@ -4,6 +4,7 @@ import domain.models.Doctor
 
 interface DoctorInterface {
     suspend fun save(doctor: Doctor):Doctor
+    suspend fun update(doctor: Doctor):Doctor
     suspend fun findByEmail(email: String): Doctor?
     suspend fun findByProfessionalLicenseNumber(licenseNumber: String): Doctor?
     suspend fun existByEmail(email: String): Boolean

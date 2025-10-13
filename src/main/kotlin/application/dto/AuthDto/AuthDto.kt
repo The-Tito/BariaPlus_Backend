@@ -1,8 +1,6 @@
 package application.dto.AuthDto
 
-import domain.models.Doctor
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
 
 
 @Serializable
