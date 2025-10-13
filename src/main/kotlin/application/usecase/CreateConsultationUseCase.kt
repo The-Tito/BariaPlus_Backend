@@ -18,14 +18,14 @@ import java.time.LocalDate
 
 class CreateConsultationUseCase(
     private val consultationAggregateInterface: ConsultationAggregateInterface,
-    private val medicalRecordInterface: MedicalRecordInterface
 ) {
     suspend fun execute( request: CreateConsultationRequest): CreateConsultationResponse {
 
         val consultation = buildConsultation(request)
         val notes = buildNotes(request.notes)
         val healthIndicators = buildHealthIndicators(request.healthIndicators)
-        val metricsValues = buildMetricsValue(request.metricsValue)
+        val metricsValues = buildMetricsValue(request.metricValues)
+        println(metricsValues.size)
 
         val aggregate = ConsultationAggregate(
             consultation = consultation,

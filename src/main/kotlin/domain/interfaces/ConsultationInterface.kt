@@ -17,7 +17,7 @@ import domain.models.TypeIndicators
 
 interface ConsultationInterface {
     suspend fun save(consultation: MedicalConsultation): MedicalConsultation
-    suspend fun findById(id: Int): MedicalConsultation
+    suspend fun findById(id: Int): MedicalConsultation?
     suspend fun findByMedicalRecordId(medicalRecordId: Int): List<MedicalConsultation>
 }
 

@@ -1,13 +1,13 @@
 package infrastructure.database.tables
 
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.javatime.date
+import org.jetbrains.exposed.sql.javatime.*
 
 object MedicalConsultationsTable : Table("medical_consultations") {
     val id = integer("id").autoIncrement()
     val date = date("date")
     val reason = text("reason")
-    val medicalRecordId = integer("medical_record_id")
+    val medicalRecordId = integer("medical_records_id")
 
     override val primaryKey = PrimaryKey(id)
 }

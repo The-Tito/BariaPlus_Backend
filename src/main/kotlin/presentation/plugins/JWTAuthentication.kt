@@ -1,23 +1,25 @@
 package com.AntonioSelvas.plugins.plugins
 
-import app.AppModule.jwtService
+
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import infrastructure.di.DependencyContent
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.application.Application
 import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.jwt.JWTCredential
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import kotlinx.serialization.Serializable
 
-fun Application.configureJWTAuthentication() {
+fun Application.configureJWTAuthentication(content: DependencyContent) {
 
     install(Authentication) {
         jwt("auth-jwt") {
-            verifier(jwtService.createVerifier())
+            verifier(content.jwtService.createVerifier())
 
             validate { credential ->
                 // Validar que el token tenga el claim doctorId

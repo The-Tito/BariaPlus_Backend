@@ -1,11 +1,6 @@
 package application.dto
 
-import domain.interfaces.HealthIndicatorInterface
-import domain.models.HealthIndicators
-import domain.models.MetricsCatalog
-import domain.models.TypeIndicators
 import kotlinx.serialization.Serializable
-import java.math.BigDecimal
 
 @Serializable
 data class CreateConsultationRequest(
@@ -14,7 +9,7 @@ data class CreateConsultationRequest(
     val medicalRecordId: Int,
     val notes: List<NotesRequestDTO> = emptyList(),
     val healthIndicators: List<HealthIndicatorsRequestDTO> = emptyList(),
-    val metricsValue: List<MetricsValueRequestDTO> = emptyList(),
+    val metricValues: List<MetricsValueRequestDTO> = emptyList(),
     )
 
 @Serializable

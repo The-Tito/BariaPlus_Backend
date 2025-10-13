@@ -48,7 +48,7 @@ data class MetricsValue(
     val id: Int? = null,
     val metricsCatalogId: Int,
     val value: BigDecimal,
-    val medicalConsultationId: Int? = null
+    val medicalConsultationId: Int? = null,
 )
 
 data class Review(
@@ -56,7 +56,7 @@ data class Review(
     val puntuation: Int,
     val comments: String,
     val date: LocalDate,
-    val medicalConsultationId: Int? = null,
+    val medicalConsultationId: Int,
 )
 
 data class ConsultationAggregate(
@@ -90,7 +90,7 @@ data class HealthIndicatorWithType(
     val value: BigDecimal,
     val typeIndicatorId: Int,
     val typeName: String,
-    val mesurementUnit: String
+    val measurementUnit: String
 )
 
 data class MetricValueWithCatalog(
@@ -98,7 +98,7 @@ data class MetricValueWithCatalog(
     val value: BigDecimal,
     val metricsId: Int,
     val metricName: String,
-    val mesurementUnit: String,
+    val measurementUnit: String,
     val categoryName: String,
 
-)
+    )
