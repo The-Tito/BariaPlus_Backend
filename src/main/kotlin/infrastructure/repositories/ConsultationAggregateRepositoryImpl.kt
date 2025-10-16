@@ -45,15 +45,7 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
                     note.copy(id = noteId, medicalConsultationId = consultationId)
                 }
 
-                val savedHealthIndicators = aggregate.healthIndicators.map { indicator ->
-                    val indicatorId = HealthIndicatorsTable.insert {
-                        it[value] = indicator.value
-                        it[typeIndicatorId] = indicator.typeIndicatorId
-                        it[medicalConsultationId] = consultationId
-                    } get HealthIndicatorsTable.id
 
-                    indicator.copy(id= indicatorId, medicalConsultationId = consultationId)
-                }
 
                 val savedMetricValues = aggregate.metricsValue.map { metric ->
                     val metricId = MetricsValueTable.insert {
@@ -68,7 +60,6 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
                 ConsultationAggregate(
                     consultation = savedConsultation,
                     notes = savedNotes,
-                    healthIndicators = savedHealthIndicators,
                     metricsValue = savedMetricValues,
                 )
             }catch (e: Exception){
@@ -101,17 +92,7 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
                 )
             }
 
-        val healthIndicators = (HealthIndicatorsTable innerJoin TypeIndicatorsTable innerJoin MeasurementUnitsTable)
-            .select { HealthIndicatorsTable.medicalConsultationId eq consultationId }
-            .map {
-                HealthIndicatorWithType(
-                    id = it[HealthIndicatorsTable.id],
-                    value = it[HealthIndicatorsTable.value],
-                    typeIndicatorId = it[HealthIndicatorsTable.typeIndicatorId],
-                    typeName = it[TypeIndicatorsTable.name],
-                    measurementUnit = it[MeasurementUnitsTable.name]
-                )
-            }
+
 
         val metricsValue = (MetricsValueTable innerJoin MetricsCatalogTable innerJoin MeasurementUnitsTable innerJoin CategoryMetricTable)
             .select { MetricsValueTable.medicalConsultationId eq consultationId }
@@ -142,7 +123,6 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
         ConsultationComplete(
             consultation = consultation,
             notes = notes,
-            healthIndicators = healthIndicators,
             metricValues = metricsValue,
             review = review,
         )

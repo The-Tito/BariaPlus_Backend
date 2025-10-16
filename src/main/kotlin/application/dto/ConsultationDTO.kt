@@ -7,16 +7,10 @@ data class CreateConsultationRequest(
     val date: String,
     val reason: String,
     val medicalRecordId: Int,
-    val notes: List<NotesRequestDTO> = emptyList(),
-    val healthIndicators: List<HealthIndicatorsRequestDTO> = emptyList(),
     val metricValues: List<MetricsValueRequestDTO> = emptyList(),
+    val notes: List<NotesRequestDTO> = emptyList(),
     )
 
-@Serializable
-data class HealthIndicatorsRequestDTO(
-    val typeIndicatorId: Int,
-    val value: String,
-)
 
 @Serializable
 data class MetricsValueRequestDTO(
@@ -48,30 +42,12 @@ data class ConsultationInfoDTO(
     val reason: String,
     val medicalRecordId: Int,
     val notesCount:Int,
-    val healthIndicatorsCount: Int,
     val metricsCount: Int,
 
 )
 
-@Serializable
-data class AddReviewRequest(
-    val puntuation: Int,
-    val comments: String,
-)
-@Serializable
-data class AddReviewResponse(
-    val success: Boolean,
-    val message: String,
-    val review: ReviewDTO? = null
-)
 
-@Serializable
-data class ReviewDTO(
-    val id: Int,
-    val puntuation: Int,
-    val comments: String,
-    val date: String
-)
+
 
 /**
  * Respuesta completa de consulta con todos sus detalles, esto es un get ya con los datos procesados
@@ -90,7 +66,6 @@ data class ConsultationDetailDTO(
     val reason: String,
     val medicalRecordId: Int,
     val notes: List<NotesResponseDTO>,
-    val healthIndicators: List<HealthIndicatorsResponseDTO> = emptyList(),
     val metricsValue: List<MetricsValueResponseDTO> = emptyList(),
 )
 
@@ -103,14 +78,7 @@ data class NotesResponseDTO(
     val categoryName: String,
 )
 
-@Serializable
-data class HealthIndicatorsResponseDTO(
-    val id: Int,
-    val value: String,
-    val typeIndicatorId: Int,
-    val typeIndicatorName: String,
-    val measurementUnit: String,
-)
+
 
 @Serializable
 data class MetricsValueResponseDTO(
@@ -129,7 +97,6 @@ data class MetricsValueResponseDTO(
 data class CatalogResponseDTO(
     val success: Boolean,
     val noteCategories: List<CategoryDTO>,
-    val typeIndicators: List<TypeIndicatorDTO>,
     val metricsCatalog: List<MetricsCatalogDTO>,
 )
 
@@ -139,13 +106,7 @@ data class CategoryDTO(
     val name: String,
 )
 
-@Serializable
-data class TypeIndicatorDTO(
-    val id: Int,
-    val name: String,
-    val measurementUnitId: Int,
-    val measurementUnitName: String
-)
+
 
 @Serializable
 data class MetricsCatalogDTO(

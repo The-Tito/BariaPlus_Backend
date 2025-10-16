@@ -9,13 +9,6 @@ data class Categories(
     val name: String
 )
 
-data class TypeIndicators(
-    val id: Int,
-    val name: String,
-    val measurementUnitId: Int,
-    val rangeId: Int,
-)
-
 data class MetricsCatalog(
     val id: Int,
     val name: String,
@@ -37,13 +30,6 @@ data class Notes(
     val categoryId: Int
 )
 
-data class HealthIndicators(
-    val id: Int? = null,
-    val value: BigDecimal,
-    val typeIndicatorId: Int,
-    val medicalConsultationId: Int? = null,
-)
-
 data class MetricsValue(
     val id: Int? = null,
     val metricsCatalogId: Int,
@@ -62,14 +48,12 @@ data class Review(
 data class ConsultationAggregate(
     val consultation: MedicalConsultation,
     val notes: List<Notes> = emptyList(),
-    val healthIndicators: List<HealthIndicators> = emptyList(),
     val metricsValue: List<MetricsValue> = emptyList(),
 )
 
 data class ConsultationComplete(
     val consultation: MedicalConsultation,
     val notes: List<NoteWithCategory>,
-    val healthIndicators: List<HealthIndicatorWithType>,
     val metricValues: List<MetricValueWithCatalog>,
     val review: Review? = null
 )
@@ -85,13 +69,7 @@ data class NoteWithCategory(
     val categoryName: String,
 )
 
-data class HealthIndicatorWithType(
-    val id: Int,
-    val value: BigDecimal,
-    val typeIndicatorId: Int,
-    val typeName: String,
-    val measurementUnit: String
-)
+
 
 data class MetricValueWithCatalog(
     val id: Int,

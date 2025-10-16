@@ -5,7 +5,6 @@ import application.dto.ConsultationDetailDTO
 import application.dto.ConsultationDetailResponse
 import application.dto.ConsultationInfoDTO
 import application.dto.CreateConsultationRequest
-import application.dto.HealthIndicatorsResponseDTO
 import application.dto.MetricsValueResponseDTO
 import application.dto.NotesResponseDTO
 import application.dto.ReviewDTO
@@ -103,15 +102,6 @@ fun Route.consultationRoutes(
                                     description = it.description,
                                     categoryId = it.categoryId,
                                     categoryName = it.categoryName
-                                )
-                            },
-                            healthIndicators = consultation.healthIndicators.map {
-                                HealthIndicatorsResponseDTO(
-                                    id = it.id,
-                                    value = it.value.toString(),
-                                    typeIndicatorId = it.typeIndicatorId,
-                                    typeIndicatorName = it.typeName,
-                                    measurementUnit = it.measurementUnit
                                 )
                             },
                             metricsValue = consultation.metricValues.map {
