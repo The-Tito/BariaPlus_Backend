@@ -84,7 +84,7 @@ class CreateConsultationUseCase(
             healthIndicators = healthIndicators
         )
 
-        // 11. Guardar TODO en transacción
+
         val savedAggregate = consultationAggregateInterface.saveConsultationWithDetails(aggregate)
 
         // 12. Preparar respuesta (sin estados aún, eso va después)
@@ -104,7 +104,7 @@ class CreateConsultationUseCase(
                 CalculatedIndicatorDTO(
                     typeIndicatorId = it.typeIndicatorId,
                     value = it.value.toString(),
-                    rangeId = 0, // TODO: Implementar comparación con rangos
+                    rangeId = 0,
                     rangeName = "Pendiente",
                     color = "#9E9E9E"
                 )
