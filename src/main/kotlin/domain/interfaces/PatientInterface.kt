@@ -6,6 +6,7 @@ import domain.models.MedicalHistory
 import domain.models.MedicalRecord
 import domain.models.Patient
 import domain.models.PatientAggregate
+import domain.models.PatientAggregateResponse
 
 interface AllergyInterface {
     suspend fun saveAll(allergies: List<Allergy>): List<Allergy>
@@ -25,9 +26,10 @@ interface MedicalHistoryInterface{
 interface MedicalRecordInterface {
     suspend fun save(medicalRecord: MedicalRecord): MedicalRecord
     suspend fun findByPatientId(patientId: Int): MedicalRecord?
-    suspend fun existsByPatientId(patientId: Int?): Boolean
+    suspend fun existsByPatientId(patientId: Int): Boolean
 }
 
 interface PatientAggregateInterface {
-    suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregate
+    suspend fun findById(id: Int): Patient?
+    suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregateResponse
 }

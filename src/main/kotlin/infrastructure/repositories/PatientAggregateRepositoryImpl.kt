@@ -1,18 +1,48 @@
 package infrastructure.repositories
 
 import domain.interfaces.PatientAggregateInterface
+import domain.models.Patient
 import domain.models.PatientAggregate
+import domain.models.PatientAggregateResponse
 import infrastructure.database.DatabaseFactory.dbQuery
 import infrastructure.database.tables.AllergiesTable
 import infrastructure.database.tables.DiseasesTable
 import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
+import infrastructure.database.tables.PatientsTable.dateOfBirth
+import infrastructure.database.tables.PatientsTable.doctorId
+import infrastructure.database.tables.PatientsTable.genderId
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.LocalDate
+import java.time.Period
+import java.time.ZoneId
+import java.util.Date
 
 class PatientAggregateRepositoryImpl: PatientAggregateInterface {
-    override suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregate = dbQuery {
+
+    private fun ResultRowPatient(row: ResultRow) = Patient(
+        id = row[PatientsTable.id],
+        firstName = row[PatientsTable.firstName],
+        lastName = row[PatientsTable.lastName],
+        dateOfBirth = row[PatientsTable.dateOfBirth],
+        entryDate = row[PatientsTable.entryDate],
+        emergencyNumber = row[PatientsTable.emergencyNumber],
+        doctorId = row[PatientsTable.doctorId],
+        genderId = row[PatientsTable.genderId],
+        statusId = row[PatientsTable.statusId],
+    )
+
+    override suspend fun findById(id: Int): Patient? = dbQuery {
+        PatientsTable.select { PatientsTable.id eq id }
+            .map { ResultRowPatient(it) }
+            .singleOrNull()
+    }
+
+    override suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregateResponse = dbQuery {
         transaction {
             try {
 
@@ -70,12 +100,19 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                     history.copy(id = historyId, patientId = patientId)
                 }
 
-                PatientAggregate(
+
+
+
+                PatientAggregateResponse(
                     patient = savedPatient,
                     medicalRecord = savedMedicalRecord,
                     allergies = savedAllergies,
                     diseases = savedDiseases,
-                    medicalHistories = savedHistories
+                    medicalHistories = savedHistories,
+                    doctorId = aggregate.patient.doctorId,
+                    genderId = aggregate.patient.genderId,
+                    dateOfBirth = aggregate.patient.dateOfBirth,
+
                 )
             }catch (e: Exception) {
                 // Si algo falla, Exposed hace rollback automático

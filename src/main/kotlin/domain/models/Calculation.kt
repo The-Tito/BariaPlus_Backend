@@ -2,9 +2,10 @@ package domain.models
 
 import java.math.BigDecimal
 
-data class CalculationResult(
-    val calculationIndicatorsResult: CalculationIndicatorsResult,
-    val calculationCatalog: CalculationCatalog,
+data class CompleteCalculationResult(
+    val healthIndicators: List<CalculationIndicatorsResult>,
+    val calculatedMetrics: List<CalculationCatalog>,
+    val completeInput: CalculationInput
 )
 
 data class CalculationIndicatorsResult(
@@ -84,4 +85,12 @@ object MetricCatalogIds {
     const val PORCENTAJE_AGUA = 25
     const val INGESTION_DIARIA_CAL = 26
     const val EDAD_METABOLICA = 27
+}
+
+object TypeIndicatorIds {
+    const val IMC = 1
+    const val PORCENTAJE_GRASA_CORPORAL = 2
+    const val PORCENTAJE_GRASA_VISCERAL = 3
+    const val PORCENTAJE_MASA_MUSCULAR = 4
+    const val INDICE_CINTURA_CADERA = 5
 }

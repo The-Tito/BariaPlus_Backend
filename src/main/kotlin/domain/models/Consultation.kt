@@ -49,6 +49,7 @@ data class ConsultationAggregate(
     val consultation: MedicalConsultation,
     val notes: List<Notes> = emptyList(),
     val metricsValue: List<MetricsValue> = emptyList(),
+    val healthIndicators: List<HealthIndicators> = emptyList(),
 )
 
 data class ConsultationComplete(

@@ -1,6 +1,7 @@
 package domain.models
 
 import java.time.LocalDate
+import java.util.Date
 
 data class Patient(
     val id: Int? = null,
@@ -47,5 +48,16 @@ data class PatientAggregate(
     val medicalRecord: MedicalRecord,
     val allergies: List<Allergy> = emptyList(),
     val diseases: List<Disease> = emptyList(),
-    val medicalHistories: List<MedicalHistory> = emptyList()
+    val medicalHistories: List<MedicalHistory> = emptyList(),
+)
+
+data class PatientAggregateResponse(
+    val patient: Patient,
+    val medicalRecord: MedicalRecord,
+    val allergies: List<Allergy> = emptyList(),
+    val diseases: List<Disease> = emptyList(),
+    val medicalHistories: List<MedicalHistory> = emptyList(),
+    val doctorId: Int,
+    val genderId: Int,
+    val dateOfBirth: LocalDate,
 )

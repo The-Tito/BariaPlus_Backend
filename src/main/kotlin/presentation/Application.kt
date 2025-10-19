@@ -7,7 +7,6 @@ import application.usecase.CreateConsultationUseCase
 import application.usecase.CreatePatientUseCase
 import application.usecase.DoctorUseCase.LoginDoctorUseCase
 import application.usecase.DoctorUseCase.RegisterDoctorUseCase
-import application.usecase.GetCatalogsUseCase
 import com.AntonioSelvas.configureMonitoring
 import com.AntonioSelvas.configureRouting
 import com.AntonioSelvas.configureSerialization
@@ -65,7 +64,7 @@ fun Application.module() {
         consultationRoutes(
             content.createConsultationUseCase,
             content.addReviewUseCase,
-            content.getCatalogsUseCase,
+
             content.consultationAggregateRepository
         )
     }

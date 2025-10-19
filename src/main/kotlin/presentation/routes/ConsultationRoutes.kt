@@ -5,12 +5,11 @@ import application.dto.ConsultationDetailDTO
 import application.dto.ConsultationDetailResponse
 import application.dto.ConsultationInfoDTO
 import application.dto.CreateConsultationRequest
-import application.dto.MetricsValueResponseDTO
-import application.dto.NotesResponseDTO
+import application.dto.MetricValueDTO
+import application.dto.NoteDTO
 import application.dto.ReviewDTO
 import application.usecase.AddReviewUseCase
 import application.usecase.CreateConsultationUseCase
-import application.usecase.GetCatalogsUseCase
 import domain.interfaces.ConsultationAggregateInterface
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
@@ -26,7 +25,7 @@ import io.ktor.server.routing.route
 fun Route.consultationRoutes(
     createConsultationUseCase: CreateConsultationUseCase,
     addReviewUseCase: AddReviewUseCase,
-    getCatalogsUseCase: GetCatalogsUseCase,
+
     consultationAggregateInterface: ConsultationAggregateInterface
 ) {
 
@@ -48,7 +47,7 @@ fun Route.consultationRoutes(
                     }
 
                     val request = call.receive<CreateConsultationRequest>()
-                    val response = createConsultationUseCase.execute(request)
+                    val response = createConsultationUseCase.execute(request, doctorId)
 
                     call.respond(HttpStatusCode.OK, response)
 
@@ -95,17 +94,16 @@ fun Route.consultationRoutes(
                             id = consultation.consultation.id!!,
                             date = consultation.consultation.date.toString(),
                             reason = consultation.consultation.reason,
-                            medicalRecordId = consultation.consultation.medicalRecordId,
                             notes = consultation.notes.map {
-                                NotesResponseDTO(
+                                NoteDTO(
                                     id = it.id,
                                     description = it.description,
                                     categoryId = it.categoryId,
                                     categoryName = it.categoryName
                                 )
                             },
-                            metricsValue = consultation.metricValues.map {
-                                MetricsValueResponseDTO(
+                            metricValues = consultation.metricValues.map {
+                                MetricValueDTO(
                                     id = it.id,
                                     value = it.value.toString(),
                                     metricsCatalogId = it.metricsId,
