@@ -1,4 +1,18 @@
 # BariaPlus
+# 🏥 Management System - REST API
+
+<div align="center">
+
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Ktor](https://img.shields.io/badge/Ktor-2.3.7-087CFA?style=for-the-badge&logo=ktor&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+**API REST para gestión hospitalaria con evaluaciones nutricionales y antropométricas automáticas**
+
+[Características](#-características) •
+[Instalación](#-instalación) •
+[Uso](#
 
 This project was created using the [Ktor Project Generator](https://start.ktor.io).
 
@@ -42,4 +56,11 @@ If the server starts successfully, you'll see the following output:
 2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
 2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
 ```
+
+Doctor Login → Crear Paciente (con alergias/enfermedades) →
+Crear Consulta (envía 6-10 métricas básicas) →
+Backend calcula 4 métricas + 5 indicadores →
+Compara con rangos →
+Retorna estado con colores
+
 
