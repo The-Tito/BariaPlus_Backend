@@ -10,12 +10,14 @@ data class CompleteCalculationResult(
 
 data class CalculationIndicatorsResult(
     val typeIndicatorId: Int,
+    val nameIndicator: String,
     val value: BigDecimal,
     val status: HealthStatus
 )
 
 data class CalculationCatalog(
     val catalogId: Int,
+    val nameCatalog: String,
     val value: BigDecimal,
 )
 

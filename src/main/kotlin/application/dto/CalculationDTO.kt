@@ -9,7 +9,9 @@ data class CreateConsultationRequest(
     val medicalRecordId: Int,
     val reason: String,
     val notes: List<NoteRequestDTO> = emptyList(),
-    val metricValues: List<MetricValueRequestDTO> = emptyList()
+    val metricValues: List<MetricValueRequestDTO> = emptyList(),
+    val energeticExpenditure: EnergeticExpenditureRequestDTO
+
 )
 
 @Serializable
@@ -18,16 +20,17 @@ data class NoteRequestDTO(
     val categoryId: Int
 )
 
-@Serializable
-data class HealthIndicatorRequestDTO(
-    val typeIndicatorId: Int,
-    val value: String // Decimal as String para evitar problemas de serialización
-)
 
 @Serializable
 data class MetricValueRequestDTO(
     val metricsCatalogId: Int,
     val value: String // Decimal as String
+)
+
+@Serializable
+data class EnergeticExpenditureRequestDTO(
+    val physicalActivityId: Int,
+    val reductionPercentage: String
 )
 
 /**
@@ -39,21 +42,33 @@ data class CreateConsultationResponse(
     val message: String,
     val consultation: ConsultationInfoDTO? = null,
     val calculatedIndicators: List<CalculatedIndicatorDTO> = emptyList(),
-    val calculatedMetrics: List<CalculatedMetricDTO> = emptyList()
+    val calculatedMetrics: List<CalculatedMetricDTO> = emptyList(),
+    val originalMetrics: List<MetricsResponseDTO> = emptyList(),
+    val originalNotes: List<NoteRequestDTO> = emptyList(),
+    val energeticExpenditure: EnergeticExpenditureResponseDTO? = null
+)
+
+@Serializable
+data class EnergeticExpenditureResponseDTO(
+    val physicalActivityId: Int,
+    val energyExpenditure: String,
+    val reductionPercentage: String,
+    val energyExpenditureReduction: String,
 )
 
 @Serializable
 data class CalculatedIndicatorDTO(
     val typeIndicatorId: Int,
+    val nameIndicator: String,
     val value: String,
     val rangeId: Int,
     val rangeName: String,
-    val color: String
 )
 
 @Serializable
 data class CalculatedMetricDTO(
     val catalogId: Int,
+    val nameCatalog: String,
     val value: String
 )
 
@@ -68,17 +83,6 @@ data class ConsultationInfoDTO(
     val metricsCount: Int
 )
 
-@Serializable
-data class HealthIndicatorDTO(
-    val id: Int,
-    val value: String,
-    val typeId: Int,
-    val typeName: String,
-    val measurementUnit: String,
-    val rangeId: Int,
-    val rangeName: String,
-    val color: String
-)
 
 
 
@@ -108,14 +112,6 @@ data class NoteDTO(
     val categoryName: String
 )
 
-@Serializable
-data class HealthIndicatorSDTO(
-    val id: Int,
-    val value: String,
-    val typeId: Int,
-    val typeName: String,
-    val measurementUnit: String
-)
 
 @Serializable
 data class MetricValueDTO(
@@ -125,5 +121,11 @@ data class MetricValueDTO(
     val metricsCatalogName: String,
     val measurementUnitName: String,
     val metricsCategoryName: String
+)
+
+@Serializable
+data class MetricsResponseDTO(
+    val metricsCatalogId: Int,
+    val value: String,
 )
 

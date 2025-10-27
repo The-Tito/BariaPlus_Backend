@@ -11,6 +11,7 @@ import domain.models.Review
 import infrastructure.database.DatabaseFactory.dbQuery
 import infrastructure.database.tables.CategoriesTable
 import infrastructure.database.tables.CategoryMetricTable
+import infrastructure.database.tables.EnergeticExpenditureTable
 import infrastructure.database.tables.HealthIndicatorsTable
 import infrastructure.database.tables.MeasurementUnitsTable
 import infrastructure.database.tables.MedicalConsultationsTable
@@ -57,10 +58,35 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
                     metric.copy(id = metricId, medicalConsultationId = consultationId)
                 }
 
+                val savedHealthIndicators = aggregate.healthIndicators.map { indicators ->
+                    val healthIndicatorId = HealthIndicatorsTable.insert {
+                        it[value] = indicators.value
+                        it[typeIndicatorId] = indicators.typeIndicatorId
+                        it[medicalConsultationId] = consultationId
+                    }get HealthIndicatorsTable.id
+
+                    indicators.copy(id = healthIndicatorId, typeIndicatorId = consultationId)
+                }
+
+                val savedEnergeticExpenditure = aggregate.energeticExpenditure?.let { energetic ->
+                    EnergeticExpenditureTable.insert {
+                        it[value] = energetic.energyExpenditure.toBigDecimal()
+                        it[medicalConsultationId] = consultationId
+                        it[physicalActivityId] = energetic.physicalActivityId
+                        it[reductionPercentage] = energetic.reductionPercentage.toBigDecimal()
+                        it[adjustedValue] = energetic.energyExpenditureReduction.toBigDecimal()
+                    }
+
+                    energetic.copy()
+
+                }
+
                 ConsultationAggregate(
                     consultation = savedConsultation,
                     notes = savedNotes,
                     metricsValue = savedMetricValues,
+                    healthIndicators = savedHealthIndicators,
+                    energeticExpenditure = savedEnergeticExpenditure
                 )
             }catch (e: Exception){
                 throw e

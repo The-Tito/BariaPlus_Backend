@@ -33,6 +33,7 @@ class CalculationService {
             calculatedMetrics.add(
                 CalculationCatalog(
                     catalogId = MetricCatalogIds.PESO_BROCCA,
+                    nameCatalog = "Peso Brocca",
                     value = pesoBrocca
                 )
             )
@@ -44,6 +45,7 @@ class CalculationService {
             calculatedMetrics.add(
                 CalculationCatalog(
                     catalogId = MetricCatalogIds.PESO_LORENTZ,
+                    nameCatalog = "Peso Lorentz",
                     value = pesoLorentz
                 )
             )
@@ -55,6 +57,7 @@ class CalculationService {
             calculatedMetrics.add(
                 CalculationCatalog(
                     catalogId = MetricCatalogIds.PESO_IDEAL_PROMEDIO,
+                    nameCatalog = "Peso Promedio",
                     value = pesoPromedio
                 )
             )
@@ -66,6 +69,7 @@ class CalculationService {
             calculatedMetrics.add(
                 CalculationCatalog(
                     catalogId = MetricCatalogIds.SUMA_PLIEGUES,
+                    nameCatalog = "Suma Pliegues",
                     value = sumaPliegues
                 )
             )
@@ -86,7 +90,7 @@ class CalculationService {
         }
 
         // Porcentaje de Grasa Corporal (de pliegues si no viene de bioimpedancia)
-        if (input.porcentajeGrasaCorporal == null && sumaPliegues != null && sumaPliegues > BigDecimal.ZERO) {
+        if (sumaPliegues != null && sumaPliegues > BigDecimal.ZERO) {
             val grasaCorporal = calculatePorcentajeGrasaCorporal(sumaPliegues)
             healthIndicators.add(grasaCorporal)
 
@@ -108,6 +112,7 @@ class CalculationService {
                 CalculationIndicatorsResult(
                     typeIndicatorId = TypeIndicatorIds.PORCENTAJE_GRASA_CORPORAL,
                     value = input.porcentajeGrasaCorporal,
+                    nameIndicator = "Porcentaje Grasa Corporal",
                     status = HealthStatus(0, "")
                 )
             )
@@ -117,11 +122,7 @@ class CalculationService {
             healthIndicators.add(grasaVisceral)
         }
 
-        // Porcentaje de Masa Muscular (si viene kg músculo de bioimpedancia)
-        if (input.kgMusculo != null && input.peso != null && input.peso > BigDecimal.ZERO) {
-            val porcentajeMM = calculatePorcentajeMasaMuscular(input.peso, input.kgMusculo)
-            healthIndicators.add(porcentajeMM)
-        }
+
 
         // 3. Crear input completo con valores calculados
         val completeInput = input.copy(
@@ -147,6 +148,7 @@ class CalculationService {
         return CalculationIndicatorsResult(
             typeIndicatorId = TypeIndicatorIds.IMC,
             value = imc,
+            nameIndicator = "IMC",
             status = HealthStatus(0, "")
         )
     }
@@ -156,11 +158,7 @@ class CalculationService {
             input.biceps,
             input.triceps,
             input.subescapular,
-            input.ileocrestal,
             input.suprailiaco,
-            input.abdominal,
-            input.axilaMedial,
-            input.pectoral
         )
 
         return pliegues
@@ -176,6 +174,7 @@ class CalculationService {
         return CalculationIndicatorsResult(
             typeIndicatorId = TypeIndicatorIds.PORCENTAJE_GRASA_CORPORAL,
             value = grasaCorporal.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+            nameIndicator = "Porcentaje grasa corporal",
             status = HealthStatus(0, "")
         )
     }
@@ -198,6 +197,7 @@ class CalculationService {
         return CalculationIndicatorsResult(
             typeIndicatorId = TypeIndicatorIds.PORCENTAJE_MASA_MUSCULAR,
             value = porcentaje,
+            nameIndicator = "Porcentaje masa muscular",
             status = HealthStatus(0, "")
         )
     }
@@ -209,6 +209,7 @@ class CalculationService {
 
         return CalculationIndicatorsResult(
             typeIndicatorId = TypeIndicatorIds.PORCENTAJE_GRASA_VISCERAL,
+            nameIndicator = "Porcentaje grasa viceral",
             value = grasaVisceral,
             status = HealthStatus(0, "")
         )
@@ -222,6 +223,7 @@ class CalculationService {
         return CalculationIndicatorsResult(
             typeIndicatorId = TypeIndicatorIds.PORCENTAJE_GRASA_VISCERAL,
             value = grasaVisceral,
+            nameIndicator = "Porcentaje grasa visceral",
             status = HealthStatus(0, "")
         )
     }
@@ -235,6 +237,7 @@ class CalculationService {
         return CalculationIndicatorsResult(
             typeIndicatorId = TypeIndicatorIds.INDICE_CINTURA_CADERA,
             value = indice,
+            nameIndicator = "Indice cintura cadera",
             status = HealthStatus(0, "")
         )
     }

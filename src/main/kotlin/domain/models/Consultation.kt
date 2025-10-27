@@ -1,5 +1,6 @@
 package domain.models
 
+import application.dto.EnergeticExpenditureResponseDTO
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -50,6 +51,7 @@ data class ConsultationAggregate(
     val notes: List<Notes> = emptyList(),
     val metricsValue: List<MetricsValue> = emptyList(),
     val healthIndicators: List<HealthIndicators> = emptyList(),
+    val energeticExpenditure: EnergeticExpenditureResponseDTO? = null,
 )
 
 data class ConsultationComplete(

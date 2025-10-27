@@ -5,20 +5,30 @@ import application.dto.CalculatedMetricDTO
 import application.dto.ConsultationInfoDTO
 import application.dto.CreateConsultationRequest
 import application.dto.CreateConsultationResponse
+import application.dto.EnergeticExpenditureRequestDTO
+import application.dto.EnergeticExpenditureResponseDTO
 import application.dto.MetricValueRequestDTO
+import application.dto.MetricsResponseDTO
 import application.dto.NoteRequestDTO
+import application.services.CalculationEnergicService
 import application.services.CalculationService
+import application.services.RangeComparisonService
 import domain.interfaces.ConsultationAggregateInterface
 import domain.interfaces.MedicalRecordInterface
 import domain.interfaces.PatientAggregateInterface
+import domain.interfaces.PhysicalActivityLevelInterface
 import domain.models.CalculationCatalog
+import domain.models.CalculationIndicatorsResult
 import domain.models.CalculationInput
 import domain.models.ConsultationAggregate
+import domain.models.EnergeticExpenditure
+import domain.models.HealthIndicatorComparison
 import domain.models.HealthIndicators
 import domain.models.MedicalConsultation
 import domain.models.MetricCatalogIds
 import domain.models.MetricsValue
 import domain.models.Notes
+import infrastructure.repositories.PhysicalActivityLevelRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Period
@@ -27,7 +37,10 @@ class CreateConsultationUseCase(
     private val consultationAggregateInterface: ConsultationAggregateInterface,
     private val patientInterface: PatientAggregateInterface,
     private val medicalRecordInterface: MedicalRecordInterface,
-    private val calculationService: CalculationService
+    private val calculationService: CalculationService,
+    private val physicalActivityLevelInterface: PhysicalActivityLevelInterface,
+    private val calculationEnergicService: CalculationEnergicService,
+    private val rangeComparisonService: RangeComparisonService
 ) {
     suspend fun execute(request: CreateConsultationRequest, doctorId: Int): CreateConsultationResponse {
         // 1. Validar request
@@ -58,6 +71,18 @@ class CreateConsultationUseCase(
         // 6. REALIZAR TODOS LOS CÁLCULOS
         val calculationResult = calculationService.calculateAll(calculationInput)
 
+        val energeticExpenditureResult = calculateEnergeticExpenditure(
+            request.energeticExpenditure,
+            calculationInput,
+            patient.genderId
+        )
+
+        val indicatorComparisons = compareHealthIndicatorsWithRanges(
+            calculationResult.healthIndicators,
+            patient.genderId,
+            age
+        )
+
         // 7. Construir consulta y notas
         val consultation = buildConsultation(request, medicalRecord.id!!)
         val notes = buildNotes(request.notes)
@@ -81,7 +106,8 @@ class CreateConsultationUseCase(
             consultation = consultation,
             notes = notes,
             metricsValue = allMetrics,
-            healthIndicators = healthIndicators
+            healthIndicators = healthIndicators,
+            energeticExpenditure = energeticExpenditureResult
         )
 
 
@@ -100,21 +126,68 @@ class CreateConsultationUseCase(
                 healthIndicatorsCount = savedAggregate.healthIndicators.size,
                 metricsCount = savedAggregate.metricsValue.size
             ),
-            calculatedIndicators = calculationResult.healthIndicators.map {
+            calculatedIndicators = calculationResult.healthIndicators.mapIndexed { index, indicator ->
+                val comparison = indicatorComparisons[index]
                 CalculatedIndicatorDTO(
-                    typeIndicatorId = it.typeIndicatorId,
-                    value = it.value.toString(),
-                    rangeId = 0,
-                    rangeName = "Pendiente",
-                    color = "#9E9E9E"
+                    typeIndicatorId = indicator.typeIndicatorId,
+                    nameIndicator = indicator.nameIndicator,
+                    value = indicator.value.toString(),
+                    rangeId = comparison.rangeId,
+                    rangeName = comparison.rangeName
                 )
             },
             calculatedMetrics = calculationResult.calculatedMetrics.map {
                 CalculatedMetricDTO(
                     catalogId = it.catalogId,
+                    nameCatalog = it.nameCatalog,
                     value = it.value.toString()
                 )
+            },
+            energeticExpenditure = energeticExpenditureResult,
+            originalMetrics = request.metricValues.map {
+                MetricsResponseDTO(
+                    metricsCatalogId = it.metricsCatalogId,
+                    value = it.value,
+                )
+            },
+            originalNotes = request.notes.map {
+                NoteRequestDTO(
+                    description = it.description,
+                    categoryId = it.categoryId,
+                )
             }
+        )
+    }
+
+    private suspend fun calculateEnergeticExpenditure(
+        request: EnergeticExpenditureRequestDTO,
+        calculationInput: CalculationInput,
+        genderId: Int
+    ): EnergeticExpenditureResponseDTO {
+        // Validar que tenemos peso y talla
+        require(calculationInput.peso != null) { "Peso requerido para calcular gasto energético" }
+        require(calculationInput.talla != null) { "Talla requerida para calcular gasto energético" }
+
+        // Obtener el factor de actividad física de la BD
+        val activityLevel = physicalActivityLevelInterface.findById(request.physicalActivityId)
+            ?: throw IllegalArgumentException("Nivel de actividad física no encontrado")
+
+        // Calcular gasto energético
+        val result = calculationEnergicService.calculateEnergic(
+            energeticExpenditure = request,
+            peso = calculationInput.peso,
+            talla = calculationInput.talla,
+            age = calculationInput.age,
+            genderId = genderId,
+            activityFactor = activityLevel.activityFactor
+        )
+
+        // Convertir a entidad de dominio
+        return EnergeticExpenditureResponseDTO(
+            physicalActivityId = result.physicalActivityId,
+            energyExpenditure = result.energyExpenditure,
+            reductionPercentage = result.reductionPercentage,
+            energyExpenditureReduction = result.energyExpenditureReduction
         )
     }
 
@@ -157,9 +230,25 @@ class CreateConsultationUseCase(
         )
     }
 
+    private suspend fun compareHealthIndicatorsWithRanges(
+        healthIndicators: List<CalculationIndicatorsResult>,
+        genderId: Int,
+        age: Int
+    ): List<HealthIndicatorComparison> {
+        return healthIndicators.map { indicator ->
+            rangeComparisonService.compareIndicatorWithRanges(
+                value = indicator.value,
+                typeIndicatorId = indicator.typeIndicatorId,
+                genderId = genderId,
+                age = age
+            )
+        }
+    }
+
     /**
      * Combina métricas originales del request con las calculadas
      */
+
     private fun buildAllMetrics(
         originalMetrics: List<MetricValueRequestDTO>,
         calculatedMetrics: List<CalculationCatalog>
