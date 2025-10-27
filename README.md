@@ -1,7 +1,7 @@
 # BariaPlus
 # 🏥 Management System - REST API
 
-<div align="center">
+<div align="center"> </div>
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![Ktor](https://img.shields.io/badge/Ktor-2.3.7-087CFA?style=for-the-badge&logo=ktor&logoColor=white)
