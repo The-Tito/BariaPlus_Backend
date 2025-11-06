@@ -58,7 +58,7 @@ fun Application.module() {
         // Rutas protegidas (requieren JWT)
 
         // Rutas de pacientes (protegidas)
-        patientRoutes(content.createPatientUseCase)
+        patientRoutes(content.createPatientUseCase, content.getPatientsFilteredUseCase)
 
         // Rutas de consultas (protegidas)
         consultationRoutes(

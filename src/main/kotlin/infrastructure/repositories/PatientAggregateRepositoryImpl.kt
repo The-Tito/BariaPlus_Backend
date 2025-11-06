@@ -11,16 +11,15 @@ import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
 import infrastructure.database.tables.PatientsTable.dateOfBirth
-import infrastructure.database.tables.PatientsTable.doctorId
 import infrastructure.database.tables.PatientsTable.genderId
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.lowerCase
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.time.LocalDate
-import java.time.Period
-import java.time.ZoneId
-import java.util.Date
 
 class PatientAggregateRepositoryImpl: PatientAggregateInterface {
 
@@ -42,6 +41,86 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
             .singleOrNull()
     }
 
+    override suspend fun findAllFiltered(
+        doctorId: Int,
+        sortBy: String,
+        search: String?,
+        statusId: Int?,
+        limit: Int,
+        offset: Int
+    ): List<Patient> = dbQuery {
+        transaction {
+            try {
+                var query = PatientsTable
+                    .select { PatientsTable.doctorId eq doctorId }
+                if (!search.isNullOrBlank()) {
+                    val searchPattern = "%${search.trim()}%"
+                    query = query.andWhere {
+                        (PatientsTable.firstName.lowerCase() like searchPattern.lowercase()) or
+                                (PatientsTable.lastName.lowerCase() like searchPattern.lowercase())
+                    }
+                }
+
+                if (statusId != null) {
+                    query = query.andWhere { PatientsTable.statusId eq statusId }
+                }
+
+                query = when (sortBy) {
+                    "recent" -> query.orderBy(PatientsTable.entryDate to SortOrder.DESC)
+                    "a-z" -> query.orderBy(PatientsTable.firstName to SortOrder.ASC)
+                    "z-a" -> query.orderBy(PatientsTable.firstName to SortOrder.DESC)
+                    else -> query.orderBy(PatientsTable.entryDate to SortOrder.DESC)
+                }
+                query = query.limit(limit, offset.toLong())
+
+                query.map { row ->
+                    Patient(
+                        id = row[PatientsTable.id],
+                        firstName = row[PatientsTable.firstName],
+                        lastName = row[PatientsTable.lastName],
+                        dateOfBirth = row[dateOfBirth],
+                        entryDate = row[PatientsTable.entryDate],
+                        emergencyNumber = row[PatientsTable.emergencyNumber],
+                        doctorId = row[PatientsTable.doctorId],
+                        genderId = row[genderId],
+                        statusId = row[PatientsTable.statusId]
+                    )
+                }
+
+            } catch (e: Exception) {
+                throw e
+            }
+        } as List<Patient>
+
+
+    }
+
+    override suspend fun countFiltered(
+        doctorId: Int,
+        search: String?,
+        statusId: Int?
+    ): Int = dbQuery{
+        transaction {
+            var query = PatientsTable
+                .select { PatientsTable.doctorId eq doctorId }
+
+            if (!search.isNullOrBlank()) {
+                val searchPattern = "%${search.trim()}%"
+                query = query.andWhere {
+                    (PatientsTable.firstName.lowerCase() like searchPattern.lowercase()) or
+                            (PatientsTable.lastName.lowerCase() like searchPattern.lowercase())
+                }
+            }
+
+            if (statusId != null) {
+                query = query.andWhere { PatientsTable.statusId eq statusId }
+            }
+
+            query.count().toInt()
+        }
+    }
+
+
     override suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregateResponse = dbQuery {
         transaction {
             try {
@@ -62,7 +141,7 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                 val medicalRecordId = MedicalRecordsTable.insert {
                     it[this.patientId] = patientId
                     it[creationDate] = aggregate.medicalRecord.creationDate
-                }get MedicalRecordsTable.id
+                } get MedicalRecordsTable.id
 
                 val savedMedicalRecord = aggregate.medicalRecord.copy(
                     id = medicalRecordId,
@@ -84,7 +163,7 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                         it[name] = disease.name
                         it[actualState] = disease.actualStateId
                         it[this.patientId] = patientId
-                    }get DiseasesTable.id
+                    } get DiseasesTable.id
 
                     disease.copy(id = diseaseId, patientId = patientId)
                 }
@@ -113,11 +192,11 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                     genderId = aggregate.patient.genderId,
                     dateOfBirth = aggregate.patient.dateOfBirth,
 
-                )
-            }catch (e: Exception) {
+                    )
+            } catch (e: Exception) {
                 // Si algo falla, Exposed hace rollback automático
                 throw e
+            }
         }
     }
-}
 }

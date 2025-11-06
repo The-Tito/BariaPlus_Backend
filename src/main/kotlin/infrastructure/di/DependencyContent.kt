@@ -10,6 +10,7 @@ import application.usecase.CreateConsultationUseCase
 import application.usecase.CreatePatientUseCase
 import application.usecase.DoctorUseCase.LoginDoctorUseCase
 import application.usecase.DoctorUseCase.RegisterDoctorUseCase
+import application.usecase.GetPatientsFilteredUseCase
 import domain.models.CalculationInput
 import infrastructure.repositories.CatalogRepositoryImpl
 import infrastructure.repositories.ConsultationAggregateRepositoryImpl
@@ -58,5 +59,6 @@ class DependencyContent(
         rangeComparationService
     )
     val addReviewUseCase = AddReviewUseCase(reviewRepository, consultationInterface )
+    val getPatientsFilteredUseCase = GetPatientsFilteredUseCase(patientRepository)
 //    val getCatalogsUseCase = GetCatalogsUseCase(catalogRepository)
 }

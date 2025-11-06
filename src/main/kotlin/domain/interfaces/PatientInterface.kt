@@ -31,5 +31,20 @@ interface MedicalRecordInterface {
 
 interface PatientAggregateInterface {
     suspend fun findById(id: Int): Patient?
+    suspend fun findAllFiltered(
+        doctorId: Int,
+        sortBy: String,
+        search: String?,
+        statusId: Int?,
+        limit: Int,
+        offset: Int,
+    ): List<Patient>
+    suspend fun countFiltered(
+        doctorId: Int,
+        search: String?,
+        statusId: Int?
+    ): Int
     suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregateResponse
 }
+
+
