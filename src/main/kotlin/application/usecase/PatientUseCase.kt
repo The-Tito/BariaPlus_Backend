@@ -5,6 +5,7 @@ import application.dto.CreatePatientRequest
 import application.dto.CreatePatientResponse
 import application.dto.DiseaseRequest
 import application.dto.MedicalHistoryRequest
+import application.dto.PatientByIDInfo
 import application.dto.PatientInfoDTO
 import domain.interfaces.PatientAggregateInterface
 import domain.models.Allergy
@@ -16,7 +17,7 @@ import domain.models.PatientAggregate
 import java.time.LocalDate
 
 
-class CreatePatientUseCase(
+class PatientUseCase(
     private val patientAggregate: PatientAggregateInterface
 ) {
 
@@ -56,6 +57,21 @@ class CreatePatientUseCase(
             )
         )
     }
+
+    suspend fun getPatientById(id: Int, doctorId: Int): PatientByIDInfo {
+        require(id > 0) { "ID de paciente inválido" }
+
+        // Obtener paciente completo
+        val result = patientAggregate.findById(id, doctorId)
+            ?: return PatientByIDInfo(
+                success = false,
+                message = "Paciente no encontrado o no tienes permiso",
+                patient = null
+            )
+
+        return result
+    }
+
 
     private fun buildPatient(request: CreatePatientRequest, doctorId: Int) = Patient(
         firstName = request.firstName.trim(),

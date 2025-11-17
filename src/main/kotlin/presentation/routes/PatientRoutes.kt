@@ -2,8 +2,9 @@ package presentation.routes
 
 import application.dto.AuthDto.ErrorResponse
 import application.dto.CreatePatientRequest
+import application.dto.PatientByIDInfo
 import application.dto.PatientsFilterRequest
-import application.usecase.CreatePatientUseCase
+import application.usecase.PatientUseCase
 import application.usecase.GetPatientsFilteredUseCase
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
@@ -17,9 +18,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.get
 
 fun Route.patientRoutes(
-    createPatientUseCase: CreatePatientUseCase,
-    getPatientsFilteredUseCase:
-    GetPatientsFilteredUseCase
+    patientUseCase: PatientUseCase,
+    getPatientsFilteredUseCase: GetPatientsFilteredUseCase
 ) {
     authenticate ("auth-jwt") {
 
@@ -40,7 +40,7 @@ fun Route.patientRoutes(
 
                     val request = call.receive<CreatePatientRequest>()
 
-                    val response = createPatientUseCase.execute(request, doctorId!!)
+                    val response = patientUseCase.execute(request, doctorId!!)
 
                     call.respond(HttpStatusCode.Created, response)
                 }catch (e: IllegalArgumentException) {
@@ -56,7 +56,7 @@ fun Route.patientRoutes(
                     )
                 }
             }
-            // GET /api/patients?sortBy=recent&search=Luis&status=active&page=1&limit=20
+
             get {
                 try {
                     // 1. Extraer doctorId del JWT
@@ -92,6 +92,48 @@ fun Route.patientRoutes(
                     call.respond(
                         HttpStatusCode.InternalServerError,
                         mapOf("error" to "Error al obtener pacientes: ${e.message}")
+                    )
+                }
+            }
+
+            get("/{id}"){
+                try {
+                    val principal = call.principal<JWTPrincipal>()
+                    val doctorId = principal?.payload?.getClaim("doctorId")?.asInt()
+                        ?: return@get call.respond(
+                            HttpStatusCode.Unauthorized,
+                            mapOf("error" to "Token inválido")
+                        )
+
+                    if (principal == null) {
+                        call.respond(
+                            HttpStatusCode.Unauthorized,
+                            ErrorResponse(message = "Token inválido")
+                        )
+                        return@get
+                    }
+
+                    val patientIdFromUrl = call.parameters["id"]?.toIntOrNull()
+                        ?: return@get call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(message = "ID de paciente inválido")
+                        )
+
+                    val response = patientUseCase.getPatientById(patientIdFromUrl, doctorId)
+
+                    if (response.success) {
+                        call.respond(HttpStatusCode.OK, response)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, response)
+                    }
+                }catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        PatientByIDInfo(
+                            success = false,
+                            message = "Error del servidor: ${e.message}",
+                            patient = null
+                        )
                     )
                 }
             }

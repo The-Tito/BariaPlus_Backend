@@ -21,14 +21,12 @@ import domain.models.CalculationCatalog
 import domain.models.CalculationIndicatorsResult
 import domain.models.CalculationInput
 import domain.models.ConsultationAggregate
-import domain.models.EnergeticExpenditure
 import domain.models.HealthIndicatorComparison
 import domain.models.HealthIndicators
 import domain.models.MedicalConsultation
 import domain.models.MetricCatalogIds
 import domain.models.MetricsValue
 import domain.models.Notes
-import infrastructure.repositories.PhysicalActivityLevelRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Period
@@ -47,7 +45,7 @@ class CreateConsultationUseCase(
         validateRequest(request)
 
         // 2. Obtener paciente y verificar pertenencia
-        val patient = patientInterface.findById(request.patientId)
+        val patient = patientInterface.findByIdPatient(request.patientId)
             ?: throw IllegalArgumentException("Paciente no encontrado")
 
         if (patient.doctorId != doctorId) {

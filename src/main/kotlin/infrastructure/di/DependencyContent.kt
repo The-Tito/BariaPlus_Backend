@@ -7,11 +7,10 @@ import application.services.PasswordService
 import application.services.RangeComparisonService
 import application.usecase.AddReviewUseCase
 import application.usecase.CreateConsultationUseCase
-import application.usecase.CreatePatientUseCase
+import application.usecase.PatientUseCase
 import application.usecase.DoctorUseCase.LoginDoctorUseCase
 import application.usecase.DoctorUseCase.RegisterDoctorUseCase
 import application.usecase.GetPatientsFilteredUseCase
-import domain.models.CalculationInput
 import infrastructure.repositories.CatalogRepositoryImpl
 import infrastructure.repositories.ConsultationAggregateRepositoryImpl
 import infrastructure.repositories.ConsultationRepositoryImpl
@@ -48,7 +47,7 @@ class DependencyContent(
 
     val registerDoctorUseCase = RegisterDoctorUseCase(doctorRepository, passwordService)
     val loginDoctorUseCase = LoginDoctorUseCase(doctorRepository, passwordService, jwtService)
-    val createPatientUseCase = CreatePatientUseCase(patientAggregateRepository)
+    val patientUseCase = PatientUseCase(patientAggregateRepository)
     val createConsultationUseCase = CreateConsultationUseCase(
         consultationAggregateInterface,
         patientRepository,

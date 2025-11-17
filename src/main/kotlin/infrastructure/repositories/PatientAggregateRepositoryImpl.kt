@@ -1,5 +1,11 @@
 package infrastructure.repositories
 
+import application.dto.AllergyResponse
+import application.dto.ConsultationsResponse
+import application.dto.DiseaseResponse
+import application.dto.MedicalHistoryResponse
+import application.dto.PatientByIDInfo
+import application.dto.PatientGetByIDInfo
 import domain.interfaces.PatientAggregateInterface
 import domain.models.Patient
 import domain.models.PatientAggregate
@@ -7,6 +13,7 @@ import domain.models.PatientAggregateResponse
 import infrastructure.database.DatabaseFactory.dbQuery
 import infrastructure.database.tables.AllergiesTable
 import infrastructure.database.tables.DiseasesTable
+import infrastructure.database.tables.MedicalConsultationsTable
 import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
@@ -14,6 +21,7 @@ import infrastructure.database.tables.PatientsTable.dateOfBirth
 import infrastructure.database.tables.PatientsTable.genderId
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.lowerCase
@@ -35,10 +43,52 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
         statusId = row[PatientsTable.statusId],
     )
 
-    override suspend fun findById(id: Int): Patient? = dbQuery {
+    override suspend fun findById(id: Int, doctorId: Int): PatientByIDInfo? = dbQuery {
+        transaction {
+            try {
+                val patientRow = PatientsTable
+                    .select {
+                        (PatientsTable.id eq id) and
+                                (PatientsTable.doctorId eq doctorId)
+                    }
+                    .singleOrNull()
+                    ?: return@transaction null
+
+                val patientInfo = PatientGetByIDInfo(
+                    firstName = patientRow[PatientsTable.firstName],
+                    lastName = patientRow[PatientsTable.lastName],
+                    dateOfBirth = patientRow[PatientsTable.dateOfBirth].toString(),
+                    entryDate = patientRow[PatientsTable.entryDate].toString(),
+                    emergencyNumber = patientRow[PatientsTable.emergencyNumber],
+
+                    medicalHistories = getMedicalHistoriesByPatientId(id),
+
+                    allergies = getAllergiesByPatientId(id),
+
+                    diseases = getDiseasesByPatientId(id),
+
+                    consultations = getConsultationsByPatientId(id),
+                )
+
+                PatientByIDInfo(
+                    success = true,
+                    message = "Paciente encontrado exitosamente",
+                    patient = patientInfo
+                )
+            }catch (e: Exception) {
+                PatientByIDInfo(
+                    success = false,
+                    message = "Error al obtener paciente: ${e.message}",
+                    patient = null
+                )
+            }
+        }
+
+    }
+
+    override suspend fun findByIdPatient(id: Int): Patient? = dbQuery {
         PatientsTable.select { PatientsTable.id eq id }
-            .map { ResultRowPatient(it) }
-            .singleOrNull()
+            .map { ResultRowPatient(it) }.singleOrNull()
     }
 
     override suspend fun findAllFiltered(
@@ -198,5 +248,60 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                 throw e
             }
         }
+    }
+
+
+//    Auxiliares
+private fun getAllergiesByPatientId(patientId: Int): List<AllergyResponse> {
+    return AllergiesTable
+        .select { AllergiesTable.patientId eq patientId }
+        .map { row ->
+            AllergyResponse(
+                name = row[AllergiesTable.name],
+                allergicReaction = row[AllergiesTable.allergicReaction]
+            )
+        }
+}
+
+    private fun getDiseasesByPatientId(patientId: Int): List<DiseaseResponse> {
+        return DiseasesTable
+            .select { DiseasesTable.patientId eq patientId }
+            .map { row ->
+                DiseaseResponse(
+                    name = row[DiseasesTable.name],
+                    actualStateId = row[DiseasesTable.actualState]
+                )
+            }
+    }
+
+    private fun getMedicalHistoriesByPatientId(patientId: Int): List<MedicalHistoryResponse> {
+        return MedicalHistoriesTable
+            .select { MedicalHistoriesTable.patientId eq patientId }
+            .map { row ->
+                MedicalHistoryResponse(
+                    name = row[MedicalHistoriesTable.name],
+                    historyTypeId = row[MedicalHistoriesTable.historyTypesId]
+                )
+            }
+    }
+
+    private fun getConsultationsByPatientId(patientId: Int): List<ConsultationsResponse> {
+        // Primero obtener el medical_record_id del paciente
+        val medicalRecordId = MedicalRecordsTable
+            .select { MedicalRecordsTable.patientId eq patientId }
+            .singleOrNull()
+            ?.get(MedicalRecordsTable.id)
+            ?: return emptyList()
+
+        // Luego obtener las consultas usando el medical_record_id
+        return MedicalConsultationsTable
+            .select { MedicalConsultationsTable.medicalRecordId eq medicalRecordId }
+            .orderBy(MedicalConsultationsTable.date to SortOrder.DESC)
+            .map { row ->
+                ConsultationsResponse(
+                    id = row[MedicalConsultationsTable.id],
+                    consultationDate = row[MedicalConsultationsTable.date].toString()
+                )
+            }
     }
 }

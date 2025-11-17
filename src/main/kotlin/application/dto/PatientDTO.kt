@@ -1,6 +1,9 @@
 package application.dto
 
+import domain.models.MedicalHistory
+import domain.models.MedicalRecord
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
 
 @Serializable
 data class CreatePatientRequest(
@@ -56,4 +59,50 @@ data class PatientInfoDTO(
     val allergiesCount: Int,
     val diseasesCount: Int,
     val medicalHistoriesCount: Int
+)
+
+//Get patientByID
+
+@Serializable
+data class PatientByIDInfo(
+    val success: Boolean,
+    val message: String,
+    val patient: PatientGetByIDInfo? = null
+)
+
+@Serializable
+data class PatientGetByIDInfo(
+    val firstName: String,
+    val lastName: String,
+    val dateOfBirth: String,
+    val entryDate: String,
+    val emergencyNumber: String,
+    val medicalHistories: List<MedicalHistoryResponse> = emptyList(),
+    val allergies: List<AllergyResponse> = emptyList(),
+    val diseases: List<DiseaseResponse> = emptyList(),
+    val consultations: List<ConsultationsResponse> = emptyList()
+)
+
+@Serializable
+data class AllergyResponse(
+    val name: String,
+    val allergicReaction: String,
+)
+
+@Serializable
+data class DiseaseResponse(
+    val name: String,
+    val actualStateId: Int,
+)
+
+@Serializable
+data class MedicalHistoryResponse(
+    val name: String,
+    val historyTypeId: Int,
+)
+
+@Serializable
+data class ConsultationsResponse(
+    val id: Int,
+    val consultationDate: String,
 )
