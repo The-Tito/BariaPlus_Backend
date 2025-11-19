@@ -106,3 +106,28 @@ data class ConsultationsResponse(
     val id: Int,
     val consultationDate: String,
 )
+
+
+//Update Patient
+
+@Serializable
+data class UpdatePatientStatusRequest(
+    val statusId: Int  // 1 = Activo, 2 = Inactivo
+)
+
+@Serializable
+data class UpdatePatientStatusResponse(
+    val success: Boolean,
+    val message: String,
+    val patient: PatientStatusDTO? = null
+)
+
+@Serializable
+data class PatientStatusDTO(
+    val id: Int,
+    val firstName: String,
+    val lastName: String,
+    val statusId: Int,
+    val statusName: String,
+    val updatedAt: String  // Timestamp de la actualización
+)

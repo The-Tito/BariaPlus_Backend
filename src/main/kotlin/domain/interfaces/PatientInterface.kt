@@ -1,6 +1,7 @@
 package domain.interfaces
 
 import application.dto.PatientByIDInfo
+import application.dto.UpdatePatientStatusResponse
 import domain.models.MedicalRecord
 import domain.models.Patient
 import domain.models.PatientAggregate
@@ -30,6 +31,12 @@ interface PatientAggregateInterface {
         statusId: Int?
     ): Int
     suspend fun saveCompleteInfo(aggregate: PatientAggregate): PatientAggregateResponse
+
+    suspend fun updateStatus(
+        patientId: Int,
+        newStatusId: Int,
+        doctorId: Int
+    ): UpdatePatientStatusResponse
 }
 
 

@@ -7,6 +7,8 @@ import application.dto.DiseaseRequest
 import application.dto.MedicalHistoryRequest
 import application.dto.PatientByIDInfo
 import application.dto.PatientInfoDTO
+import application.dto.UpdatePatientStatusRequest
+import application.dto.UpdatePatientStatusResponse
 import domain.interfaces.PatientAggregateInterface
 import domain.models.Allergy
 import domain.models.Disease
@@ -72,6 +74,24 @@ class PatientUseCase(
         return result
     }
 
+    suspend fun updateStatusPatient(
+        patientId: Int,
+        request: UpdatePatientStatusRequest,
+        doctorId: Int
+    ): UpdatePatientStatusResponse {
+
+        require(patientId > 0) { "ID de paciente inválido" }
+
+        require(request.statusId in listOf(1, 2)) {
+            "Status inválido. Debe ser 1 (Activo) o 2 (Inactivo)"
+        }
+
+        return patientAggregate.updateStatus(
+            patientId = patientId,
+            newStatusId = request.statusId,
+            doctorId = doctorId
+        )
+    }
 
     private fun buildPatient(request: CreatePatientRequest, doctorId: Int) = Patient(
         firstName = request.firstName.trim(),

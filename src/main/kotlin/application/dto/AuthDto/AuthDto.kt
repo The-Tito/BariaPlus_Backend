@@ -43,8 +43,12 @@ data class DoctorInfo(
     val id: Int,
     val firstName: String,
     val lastName: String,
+    val gender: String,
     val email: String,
-    val professionalLicenseNumber: String
+    val graduationInstitution: String,
+    val employmentStart: String,
+    val professionalLicenseNumber: String,
+    val currentWorkplace: String
 )
 
 

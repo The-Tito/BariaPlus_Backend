@@ -37,7 +37,11 @@ class LoginDoctorUseCase(
             firstName = doctor.firstName,
             lastName = doctor.lastName,
             email = doctor.email,
-            professionalLicenseNumber = doctor.professionalLicense
+            professionalLicenseNumber = doctor.professionalLicense,
+            gender = if (doctor.gender == 1) "Femenino" else "Masculino",
+            graduationInstitution = doctor.graduationInstitution,
+            employmentStart = doctor.employmentStart.toString(),
+            currentWorkplace = doctor.currentWorkplace,
         )
 
         return LoginResponse(

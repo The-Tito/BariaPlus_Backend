@@ -70,6 +70,10 @@ class UpdateDoctorUseCase(
                 lastName = savedDoctor.lastName,
                 email = savedDoctor.email,
                 professionalLicenseNumber = savedDoctor.professionalLicense,
+                gender = if (savedDoctor.gender == 1) "Femenino" else "Masculino",
+                graduationInstitution = savedDoctor.graduationInstitution,
+                employmentStart = savedDoctor.employmentStart.toString(),
+                currentWorkplace = savedDoctor.currentWorkplace,
             )
         )
     }

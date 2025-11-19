@@ -6,6 +6,8 @@ import application.dto.DiseaseResponse
 import application.dto.MedicalHistoryResponse
 import application.dto.PatientByIDInfo
 import application.dto.PatientGetByIDInfo
+import application.dto.PatientStatusDTO
+import application.dto.UpdatePatientStatusResponse
 import domain.interfaces.PatientAggregateInterface
 import domain.models.Patient
 import domain.models.PatientAggregate
@@ -19,6 +21,7 @@ import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
 import infrastructure.database.tables.PatientsTable.dateOfBirth
 import infrastructure.database.tables.PatientsTable.genderId
+import infrastructure.database.tables.StatusPatientsTable
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
@@ -28,6 +31,8 @@ import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import java.time.LocalDateTime
 
 class PatientAggregateRepositoryImpl: PatientAggregateInterface {
 
@@ -250,8 +255,86 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
         }
     }
 
+    override suspend fun updateStatus(
+        patientId: Int,
+        newStatusId: Int,
+        doctorId: Int
+    ): UpdatePatientStatusResponse = dbQuery {
+        transaction {
+            try {
 
-//    Auxiliares
+                val patient = PatientsTable
+                    .select {
+                        (PatientsTable.id eq patientId) and
+                                (PatientsTable.doctorId eq doctorId)
+                    }
+                    .singleOrNull()
+                    ?: return@transaction UpdatePatientStatusResponse(
+                        success = false,
+                        message = "Paciente no encontrado o no tienes permiso para modificarlo",
+                        patient = null
+                    )
+
+
+                if (newStatusId !in listOf(1, 2)) {
+                    return@transaction UpdatePatientStatusResponse(
+                        success = false,
+                        message = "Status inválido. Debe ser 1 (Activo) o 2 (Inactivo)",
+                        patient = null
+                    )
+                }
+
+
+                val updatedRows = PatientsTable.update(
+                    where = {
+                        (PatientsTable.id eq patientId) and
+                                (PatientsTable.doctorId eq doctorId)
+                    }
+                ) {
+                    it[statusId] = newStatusId
+                }
+
+
+                if (updatedRows == 0) {
+                    return@transaction UpdatePatientStatusResponse(
+                        success = false,
+                        message = "No se pudo actualizar el paciente",
+                        patient = null
+                    )
+                }
+
+
+                val statusName = StatusPatientsTable
+                    .select { StatusPatientsTable.id eq newStatusId }
+                    .single()[StatusPatientsTable.name]
+
+
+                UpdatePatientStatusResponse(
+                    success = true,
+                    message = "Status actualizado exitosamente",
+                    patient = PatientStatusDTO(
+                        id = patient[PatientsTable.id],
+                        firstName = patient[PatientsTable.firstName],
+                        lastName = patient[PatientsTable.lastName],
+                        statusId = newStatusId,
+                        statusName = statusName,
+                        updatedAt = LocalDateTime.now().toString()
+                    )
+                )
+
+            } catch (e: Exception) {
+                UpdatePatientStatusResponse(
+                    success = false,
+                    message = "Error al actualizar status: ${e.message}",
+                    patient = null
+                )
+            }
+        }
+    }
+    }
+
+
+    //    Auxiliares
 private fun getAllergiesByPatientId(patientId: Int): List<AllergyResponse> {
     return AllergiesTable
         .select { AllergiesTable.patientId eq patientId }
@@ -304,4 +387,4 @@ private fun getAllergiesByPatientId(patientId: Int): List<AllergyResponse> {
                 )
             }
     }
-}
+
