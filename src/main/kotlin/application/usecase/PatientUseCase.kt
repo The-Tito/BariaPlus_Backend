@@ -4,6 +4,7 @@ import application.dto.AllergyRequest
 import application.dto.CreatePatientRequest
 import application.dto.CreatePatientResponse
 import application.dto.DiseaseRequest
+import application.dto.IndicatorStatsResponse
 import application.dto.MedicalHistoryRequest
 import application.dto.PatientByIDInfo
 import application.dto.PatientInfoDTO
@@ -91,6 +92,10 @@ class PatientUseCase(
             newStatusId = request.statusId,
             doctorId = doctorId
         )
+    }
+
+    suspend fun getPatientStats(patientIdFromUrl: Int, indicator: Int): IndicatorStatsResponse {
+        return patientAggregate.getPatientStats(patientIdFromUrl, indicator)
     }
 
     private fun buildPatient(request: CreatePatientRequest, doctorId: Int) = Patient(

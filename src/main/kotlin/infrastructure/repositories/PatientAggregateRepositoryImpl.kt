@@ -3,6 +3,8 @@ package infrastructure.repositories
 import application.dto.AllergyResponse
 import application.dto.ConsultationsResponse
 import application.dto.DiseaseResponse
+import application.dto.IndicatorStatsPoint
+import application.dto.IndicatorStatsResponse
 import application.dto.MedicalHistoryResponse
 import application.dto.PatientByIDInfo
 import application.dto.PatientGetByIDInfo
@@ -15,6 +17,7 @@ import domain.models.PatientAggregateResponse
 import infrastructure.database.DatabaseFactory.dbQuery
 import infrastructure.database.tables.AllergiesTable
 import infrastructure.database.tables.DiseasesTable
+import infrastructure.database.tables.HealthIndicatorsTable
 import infrastructure.database.tables.MedicalConsultationsTable
 import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
@@ -22,6 +25,7 @@ import infrastructure.database.tables.PatientsTable
 import infrastructure.database.tables.PatientsTable.dateOfBirth
 import infrastructure.database.tables.PatientsTable.genderId
 import infrastructure.database.tables.StatusPatientsTable
+import infrastructure.database.tables.TypeIndicatorsTable
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
@@ -331,7 +335,66 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
             }
         }
     }
+
+    override suspend fun getPatientStats(
+        patientIdFromUrl: Int,
+        indicator: Int
+    ): IndicatorStatsResponse = dbQuery {
+        // Paso 1: obtener medical_record_id del paciente
+        val medicalRecordId = MedicalRecordsTable
+            .select { MedicalRecordsTable.patientId eq patientIdFromUrl }
+            .singleOrNull()
+            ?.get(MedicalRecordsTable.id)
+            ?: return@dbQuery IndicatorStatsResponse(
+                success = false,
+                message = "No existe expediente",
+                patientId = patientIdFromUrl,
+                indicatorId = indicator,
+                indicatorName = "",
+                data = emptyList()
+            )
+
+        // Paso 2: obtener todas las consultas del paciente (con fechas)
+        val consultations = MedicalConsultationsTable
+            .select { MedicalConsultationsTable.medicalRecordId eq medicalRecordId }
+            .orderBy(MedicalConsultationsTable.date to SortOrder.ASC)
+            .map { it[MedicalConsultationsTable.id] to it[MedicalConsultationsTable.date] }
+
+        // Paso 3: para cada consulta, obtener el valor del indicador pedido
+        val points = consultations.mapNotNull { (consultationId, date) ->
+            val indicatorRow = HealthIndicatorsTable
+                .select {
+                    (HealthIndicatorsTable.medicalConsultationId eq consultationId) and
+                            (HealthIndicatorsTable.typeIndicatorId eq indicator)
+                }
+                .singleOrNull()
+
+            indicatorRow?.let {
+                IndicatorStatsPoint(
+                    date = date.toString(),
+                    value = it[HealthIndicatorsTable.value].toDouble()
+                )
+            }
+        }
+
+        IndicatorStatsResponse(
+            success = true,
+            message = "Datos encontrados",
+            patientId = patientIdFromUrl,
+            indicatorId = indicator,
+            indicatorName = getIndicatorName(indicator), // función auxiliar
+            data = points
+        )
     }
+
+    // Puedes tener una función auxiliar para obtener el nombre del indicador
+    private fun getIndicatorName(typeIndicatorId: Int): String {
+        return TypeIndicatorsTable
+            .select { TypeIndicatorsTable.id eq typeIndicatorId }
+            .singleOrNull()
+            ?.get(TypeIndicatorsTable.name) ?: "Indicador"
+    }
+}
 
 
     //    Auxiliares

@@ -1,5 +1,6 @@
 package domain.interfaces
 
+import application.dto.IndicatorStatsResponse
 import application.dto.PatientByIDInfo
 import application.dto.UpdatePatientStatusResponse
 import domain.models.MedicalRecord
@@ -37,6 +38,11 @@ interface PatientAggregateInterface {
         newStatusId: Int,
         doctorId: Int
     ): UpdatePatientStatusResponse
+
+    suspend fun getPatientStats(
+        patientIdFromUrl: Int,
+        indicator: Int
+    ): IndicatorStatsResponse
 }
 
 

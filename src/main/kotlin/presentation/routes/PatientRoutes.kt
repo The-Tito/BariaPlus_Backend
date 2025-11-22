@@ -187,6 +187,43 @@ fun Route.patientRoutes(
                 }
             }
 
+            get("/{id}/stats") {
+                try{
+                    val principal = call.principal<JWTPrincipal>()
+                    val doctorId = principal?.payload?.getClaim("doctorId")?.asInt()
+                        ?: return@get call.respond(
+                            HttpStatusCode.Unauthorized,
+                            mapOf("error" to "Token inválido")
+                        )
+
+                    val patientIdFromUrl = call.parameters["id"]?.toIntOrNull()
+                        ?: return@get call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(message = "ID de paciente inválido")
+                        )
+
+                    val indicator = call.request.queryParameters["indicator"]?.toInt() ?: 1
+
+
+                    val response = patientUseCase.getPatientStats(patientIdFromUrl, indicator)
+
+                    if (response.success) {
+                        call.respond(HttpStatusCode.OK, response)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, response)
+                    }
+                }catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        PatientByIDInfo(
+                            success = false,
+                            message = "Error del servidor: ${e.message}",
+                            patient = null
+                        )
+                    )
+                }
+            }
+
         }
     }
 }

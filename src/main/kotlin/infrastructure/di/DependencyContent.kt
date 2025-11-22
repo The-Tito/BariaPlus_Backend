@@ -11,7 +11,6 @@ import application.usecase.PatientUseCase
 import application.usecase.DoctorUseCase.LoginDoctorUseCase
 import application.usecase.DoctorUseCase.RegisterDoctorUseCase
 import application.usecase.GetPatientsFilteredUseCase
-import infrastructure.repositories.CatalogRepositoryImpl
 import infrastructure.repositories.ConsultationAggregateRepositoryImpl
 import infrastructure.repositories.ConsultationRepositoryImpl
 import infrastructure.repositories.DoctorRepositoryImpl
@@ -34,7 +33,6 @@ class DependencyContent(
     val consultationAggregateInterface = ConsultationAggregateRepositoryImpl()
     val consultationAggregateRepository = ConsultationAggregateRepositoryImpl()
     val reviewRepository = ReviewRepositoryImpl()
-    val catalogRepository = CatalogRepositoryImpl()
     val medicalRepository = MedicalRecordRepositoryImpl()
     val physicalActivityLevelRepository = PhysicalActivityLevelRepository()
     val rangeDetailRepository = RangeDetailRepository()

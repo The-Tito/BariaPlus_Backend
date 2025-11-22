@@ -55,7 +55,6 @@ object TypeIndicatorsTable : Table("type_indicators") {
     val name = varchar("name", 50)
     val measurementUnitId = integer("measurement_unit_id")
         .references(MeasurementUnitsTable.id)
-    val rangeId = integer("range_id").references(RangesTable.id)
 
     override val primaryKey = PrimaryKey(id)
 }
