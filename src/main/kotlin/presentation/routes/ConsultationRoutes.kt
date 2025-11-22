@@ -1,5 +1,6 @@
 package presentation.routes
 
+import application.dto.AddReviewRequest
 import application.dto.AuthDto.ErrorResponse
 import application.dto.ConsultationDetailDTO
 import application.dto.ConsultationDetailResponse
@@ -25,7 +26,6 @@ import io.ktor.server.routing.route
 fun Route.consultationRoutes(
     createConsultationUseCase: CreateConsultationUseCase,
     addReviewUseCase: AddReviewUseCase,
-
     consultationAggregateInterface: ConsultationAggregateInterface
 ) {
 
@@ -51,13 +51,13 @@ fun Route.consultationRoutes(
 
                     call.respond(HttpStatusCode.OK, response)
 
-                }catch (e: IllegalArgumentException) {
+                } catch (e: IllegalArgumentException) {
                     call.respond(
                         HttpStatusCode.BadRequest,
                         ErrorResponse(message = e.message ?: "Datos inválidos")
                     )
                 } catch (e: Exception) {
-                        call.application.environment.log.error("Error al obtener consulta", e)
+                    call.application.environment.log.error("Error al obtener consulta", e)
                     call.respond(
                         HttpStatusCode.InternalServerError,
                         ErrorResponse(message = "Error interno del servidor")
@@ -65,7 +65,7 @@ fun Route.consultationRoutes(
                 }
             }
 
-            get("/{id}"){
+            get("/{id}") {
                 try {
                     val consultationId = call.parameters["id"]?.toIntOrNull()
 
@@ -116,7 +116,41 @@ fun Route.consultationRoutes(
                     )
 
                     call.respond(HttpStatusCode.OK, response)
-                }catch (e: Exception) {
+                } catch (e: Exception) {
+                    call.application.environment.log.error("Error al obtener consulta", e)
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        ErrorResponse(message = "Error interno del servidor")
+                    )
+                }
+            }
+
+            post("/{id}/review") {
+                try {
+                    val consultationId = call.parameters["id"]?.toIntOrNull()
+
+                    if (consultationId == null) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(message = "ID de consulta inválido")
+                        )
+                        return@post
+                    }
+
+                    val request = call.receive<AddReviewRequest>()
+
+                    val response = addReviewUseCase.execute(consultationId, request)
+                    if (response.success) {
+                        call.respond(HttpStatusCode.OK, response)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, response)
+                    }
+                } catch (e: IllegalArgumentException) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(message = e.message ?: "Datos inválidos")
+                    )
+                } catch (e: Exception) {
                     call.application.environment.log.error("Error al obtener consulta", e)
                     call.respond(
                         HttpStatusCode.InternalServerError,
