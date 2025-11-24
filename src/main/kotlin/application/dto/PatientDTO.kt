@@ -75,6 +75,7 @@ data class PatientGetByIDInfo(
     val firstName: String,
     val lastName: String,
     val dateOfBirth: String,
+    val genderId: Int,
     val entryDate: String,
     val emergencyNumber: String,
     val medicalHistories: List<MedicalHistoryResponse> = emptyList(),

@@ -67,6 +67,7 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                     firstName = patientRow[PatientsTable.firstName],
                     lastName = patientRow[PatientsTable.lastName],
                     dateOfBirth = patientRow[PatientsTable.dateOfBirth].toString(),
+                    genderId = patientRow[PatientsTable.genderId],
                     entryDate = patientRow[PatientsTable.entryDate].toString(),
                     emergencyNumber = patientRow[PatientsTable.emergencyNumber],
 

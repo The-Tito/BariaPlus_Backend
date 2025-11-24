@@ -124,7 +124,6 @@ fun Route.consultationRoutes(
                     )
                 }
             }
-
             post("/{id}/review") {
                 try {
                     val consultationId = call.parameters["id"]?.toIntOrNull()
