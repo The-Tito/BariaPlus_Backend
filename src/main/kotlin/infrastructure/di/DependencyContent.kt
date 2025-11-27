@@ -24,24 +24,24 @@ class DependencyContent(
 
 
     ) {
+    val rangeDetailRepository = RangeDetailRepository()
+    val rangeComparationService = RangeComparisonService(rangeDetailRepository)
     val consultationInterface = ConsultationRepositoryImpl()
 
     val doctorRepository = DoctorRepositoryImpl()
     val patientRepository = PatientAggregateRepositoryImpl()
 
     val patientAggregateRepository = PatientAggregateRepositoryImpl()
-    val consultationAggregateInterface = ConsultationAggregateRepositoryImpl()
-    val consultationAggregateRepository = ConsultationAggregateRepositoryImpl()
+    val consultationAggregateInterface = ConsultationAggregateRepositoryImpl(rangeComparationService)
+    val consultationAggregateRepository = ConsultationAggregateRepositoryImpl(rangeComparationService)
     val reviewRepository = ReviewRepositoryImpl()
     val medicalRepository = MedicalRecordRepositoryImpl()
     val physicalActivityLevelRepository = PhysicalActivityLevelRepository()
-    val rangeDetailRepository = RangeDetailRepository()
 
     val passwordService = PasswordService()
     val jwtService = JWTService()
     val calculationService = CalculationService()
-    val calculationEnergicService = CalculationEnergicService()
-    val rangeComparationService = RangeComparisonService(rangeDetailRepository)
+    val calculationEnergicService = CalculationEnergicService(consultationAggregateRepository)
 
     val registerDoctorUseCase = RegisterDoctorUseCase(doctorRepository, passwordService)
     val loginDoctorUseCase = LoginDoctorUseCase(doctorRepository, passwordService, jwtService)

@@ -81,7 +81,8 @@ data class PatientGetByIDInfo(
     val medicalHistories: List<MedicalHistoryResponse> = emptyList(),
     val allergies: List<AllergyResponse> = emptyList(),
     val diseases: List<DiseaseResponse> = emptyList(),
-    val consultations: List<ConsultationsResponse> = emptyList()
+    val consultations: List<ConsultationsResponse> = emptyList(),
+    val medicalRecordId: Int? = null
 )
 
 @Serializable

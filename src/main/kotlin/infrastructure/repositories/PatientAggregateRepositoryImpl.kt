@@ -11,6 +11,7 @@ import application.dto.PatientGetByIDInfo
 import application.dto.PatientStatusDTO
 import application.dto.UpdatePatientStatusResponse
 import domain.interfaces.PatientAggregateInterface
+import domain.models.MedicalRecord
 import domain.models.Patient
 import domain.models.PatientAggregate
 import domain.models.PatientAggregateResponse
@@ -19,6 +20,7 @@ import infrastructure.database.tables.AllergiesTable
 import infrastructure.database.tables.DiseasesTable
 import infrastructure.database.tables.HealthIndicatorsTable
 import infrastructure.database.tables.MedicalConsultationsTable
+import infrastructure.database.tables.MedicalConsultationsTable.medicalRecordId
 import infrastructure.database.tables.MedicalHistoriesTable
 import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.PatientsTable
@@ -78,6 +80,8 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                     diseases = getDiseasesByPatientId(id),
 
                     consultations = getConsultationsByPatientId(id),
+
+                    medicalRecordId = getMedicalRecordById(id)
                 )
 
                 PatientByIDInfo(
@@ -408,6 +412,12 @@ private fun getAllergiesByPatientId(patientId: Int): List<AllergyResponse> {
                 allergicReaction = row[AllergiesTable.allergicReaction]
             )
         }
+}
+
+private fun getMedicalRecordById(id: Int): Int? {
+    return MedicalRecordsTable
+        .select { MedicalRecordsTable.patientId eq id }
+        .singleOrNull()?.get(MedicalRecordsTable.id)
 }
 
     private fun getDiseasesByPatientId(patientId: Int): List<DiseaseResponse> {

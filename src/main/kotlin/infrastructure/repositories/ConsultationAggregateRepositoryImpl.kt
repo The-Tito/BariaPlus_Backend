@@ -1,10 +1,21 @@
 package infrastructure.repositories
 
+import application.dto.CalculatedIndicatorDTO
+import application.dto.CalculatedIndicatorResponse
+import application.dto.CalculatedMetrics
+import application.dto.ConsultationCompleteResponseDTO
+import application.dto.EnergeticAdjustmentResponseDTO
+import application.dto.EnergeticExpenditureResponse
+import application.dto.HealthIndicatorsAux
+import application.dto.MedicalConsultationResponse
+import application.dto.OriginalMetrics
+import application.dto.OriginalNotes
+import application.dto.PatientInfoAux
+import application.services.RangeComparisonService
 import domain.interfaces.ConsultationAggregateInterface
 import domain.models.ConsultationAggregate
-import domain.models.ConsultationComplete
-import domain.models.HealthIndicatorWithType
-import domain.models.MedicalConsultation
+import domain.models.EnergeticExpenditure
+import domain.models.HealthIndicatorComparison
 import domain.models.MetricValueWithCatalog
 import domain.models.NoteWithCategory
 import domain.models.Review
@@ -15,16 +26,25 @@ import infrastructure.database.tables.EnergeticExpenditureTable
 import infrastructure.database.tables.HealthIndicatorsTable
 import infrastructure.database.tables.MeasurementUnitsTable
 import infrastructure.database.tables.MedicalConsultationsTable
+import infrastructure.database.tables.MedicalRecordsTable
 import infrastructure.database.tables.MetricsCatalogTable
 import infrastructure.database.tables.MetricsValueTable
 import infrastructure.database.tables.NotesTable
+import infrastructure.database.tables.PatientsTable
 import infrastructure.database.tables.ReviewsTable
 import infrastructure.database.tables.TypeIndicatorsTable
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.Period
 
-class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
+class ConsultationAggregateRepositoryImpl(
+    override val rangeComparisonService: RangeComparisonService
+) : ConsultationAggregateInterface {
     override suspend fun saveConsultationWithDetails(aggregate: ConsultationAggregate): ConsultationAggregate = dbQuery {
         transaction {
             try {
@@ -69,15 +89,15 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
                 }
 
                 val savedEnergeticExpenditure = aggregate.energeticExpenditure?.let { energetic ->
-                    EnergeticExpenditureTable.insert {
+                    val savedEnergeticExpenditureId = EnergeticExpenditureTable.insert {
                         it[value] = energetic.energyExpenditure.toBigDecimal()
                         it[medicalConsultationId] = consultationId
                         it[physicalActivityId] = energetic.physicalActivityId
                         it[reductionPercentage] = energetic.reductionPercentage.toBigDecimal()
                         it[adjustedValue] = energetic.energyExpenditureReduction.toBigDecimal()
-                    }
+                    }get EnergeticExpenditureTable.id
 
-                    energetic.copy()
+                    energetic.copy(energeticExpenditureId = savedEnergeticExpenditureId)
 
                 }
 
@@ -94,63 +114,171 @@ class ConsultationAggregateRepositoryImpl: ConsultationAggregateInterface {
         }
     }
 
-    override suspend fun findCompleteConsultation(consultationId: Int): ConsultationComplete? = dbQuery {
-        val consultation = MedicalConsultationsTable
-            .select { MedicalConsultationsTable.id eq consultationId }
-            .map {
-                MedicalConsultation(
-                    id = it[MedicalConsultationsTable.id],
-                    date = it[MedicalConsultationsTable.date],
-                    reason = it[MedicalConsultationsTable.reason],
-                    medicalRecordId = it[MedicalConsultationsTable.medicalRecordId],
+    override suspend fun findCompleteConsultation(consultationId: Int): ConsultationCompleteResponseDTO? = dbQuery {
+        try {
+            val consultation = MedicalConsultationsTable
+                .select { MedicalConsultationsTable.id eq consultationId }
+                .map {
+                    MedicalConsultationResponse(
+                        id = it[MedicalConsultationsTable.id],
+                        date = it[MedicalConsultationsTable.date].toString(),
+                        reason = it[MedicalConsultationsTable.reason],
+                        medicalRecordId = it[MedicalConsultationsTable.medicalRecordId],
+                    )
+                }
+                .singleOrNull() ?: return@dbQuery null
+
+            val healthIndicators = (HealthIndicatorsTable innerJoin TypeIndicatorsTable)
+                .select {  HealthIndicatorsTable.medicalConsultationId eq consultationId }
+                .map {
+                    HealthIndicatorsAux(
+                        typeIndicatorId = it[HealthIndicatorsTable.typeIndicatorId],
+                        nameIndicator =  it[TypeIndicatorsTable.name],
+                        value = it[HealthIndicatorsTable.value],
+                    )
+                }
+
+            val patientInfo = (MedicalRecordsTable innerJoin PatientsTable)
+                .select { MedicalRecordsTable.id eq consultation.medicalRecordId }
+                .limit(1)
+                .map {
+                    val dob = it[PatientsTable.dateOfBirth]
+                    val age = Period.between(dob, LocalDate.now()).years
+                    PatientInfoAux(
+                        genderId = it[PatientsTable.genderId],
+                        age = age
+                    )
+                }
+                .first()
+
+
+            val indicatorComparisons = compareHealthIndicatorsWithRanges(
+                healthIndicators,
+                patientInfo
+            )
+
+            val calculatedIndicators = healthIndicators.mapIndexed { index, indicator ->
+                val comparison = indicatorComparisons.getOrNull(index)
+                CalculatedIndicatorResponse(
+                    typeIndicatorId = indicator.typeIndicatorId,
+                    nameIndicator = indicator.nameIndicator,
+                    value = indicator.value.toString(),
+                    rangeId = comparison?.rangeId ?: 0,              // usar valores seguros o por defecto
+                    rangeName = comparison?.rangeName ?: "Sin rango"
                 )
             }
-            .singleOrNull() ?: return@dbQuery null
+            val allowedCatalogIds = listOf(3, 4, 5, 21)
 
-        val notes = (NotesTable innerJoin CategoriesTable)
-            .select { NotesTable.medicalConsultationId eq consultationId }
-            .map {
-                NoteWithCategory(
-                    id = it[NotesTable.id],
-                    description = it[NotesTable.description],
-                    categoryId = it[NotesTable.categoryId],
-                    categoryName = it[CategoriesTable.name],
-                )
+            val calculatedMetrics = (MetricsValueTable innerJoin MetricsCatalogTable)
+                .select {
+                    (MetricsValueTable.medicalConsultationId eq consultationId) and
+                            (MetricsValueTable.metricsCatalogId inList allowedCatalogIds)
+                }
+                .map {
+                    CalculatedMetrics(
+                        catalogId = it[MetricsValueTable.metricsCatalogId],
+                        nameCatalog = it[MetricsCatalogTable.name],
+                        value = it[MetricsValueTable.value].toString()
+                    )
+                }
+
+            val excludedCatalogIds = listOf(3, 4, 5, 21)
+
+            val originalMetrics = (MetricsValueTable innerJoin MetricsCatalogTable)
+                .select {
+                    (MetricsValueTable.medicalConsultationId eq consultationId) and
+                            (MetricsValueTable.metricsCatalogId notInList excludedCatalogIds)
+                }
+                .map {
+                    OriginalMetrics(
+                        metricsCatalogId = it[MetricsValueTable.metricsCatalogId],
+                        nameCatalog = it[MetricsCatalogTable.name],
+                        value = it[MetricsValueTable.value].toString()
+                    )
+                }
+
+            val originalNotes = (NotesTable)
+                .select { NotesTable.medicalConsultationId eq consultationId }
+                .map {
+                    OriginalNotes(
+                        description = it[NotesTable.description],
+                        categoryId = it[NotesTable.categoryId],
+                    )
+                }
+
+            val energeticExpenditure = EnergeticExpenditureTable
+                .select { EnergeticExpenditureTable.medicalConsultationId eq consultationId }
+                .limit(1)
+                .map {
+                    EnergeticExpenditureResponse(
+                        physicalActivityId = it[EnergeticExpenditureTable.physicalActivityId],
+                        energyExpenditure = it[EnergeticExpenditureTable.value].toString(),
+                        reductionPercentage = it[EnergeticExpenditureTable.reductionPercentage].toString(),
+                        energyExpenditureReduction = it[EnergeticExpenditureTable.adjustedValue].toString(),
+                    )
+                }.first()
+
+
+
+
+            ConsultationCompleteResponseDTO(
+                success = true,
+                message = "Consulta encontrada con exito",
+                consultation = consultation,
+                calculatedIndicators = calculatedIndicators,
+                calculatedMetrics = calculatedMetrics,
+                originalMetrics = originalMetrics,
+                originalNotes = originalNotes,
+                energeticExpenditure = energeticExpenditure
+            )
+
+        }catch (e:Exception){
+            ConsultationCompleteResponseDTO(
+                success = false,
+                message = "Error al obtener consulta: ${e.message}",
+                consultation = null
+            )
+
+        }
+
+    }
+
+    override suspend fun updateEnergyExpenditure(
+        consultationId: Int,
+        adjustmentPercentage: BigDecimal,
+        adjustedValue: BigDecimal
+    ): EnergeticAdjustmentResponseDTO = dbQuery {
+        try {
+            EnergeticExpenditureTable.update({ EnergeticExpenditureTable.medicalConsultationId eq consultationId}){
+                it[reductionPercentage] = adjustmentPercentage
+                it[this.adjustedValue] = adjustedValue
             }
+            EnergeticAdjustmentResponseDTO(
+                success = true,
+                message = "Se actualizo correctamente",
+                adjustedEnergyExpenditure = adjustedValue.toString()
+            )
+        }catch (e: Exception){
+            EnergeticAdjustmentResponseDTO(
+                success = false,
+                message = "No se pudo registrar el ajuste",
+                adjustedEnergyExpenditure = null
+            )
+        }
+    }
 
-
-
-        val metricsValue = (MetricsValueTable innerJoin MetricsCatalogTable innerJoin MeasurementUnitsTable innerJoin CategoryMetricTable)
-            .select { MetricsValueTable.medicalConsultationId eq consultationId }
-            .map {
-                MetricValueWithCatalog(
-                    id = it[MetricsCatalogTable.id],
-                    value = it[MetricsValueTable.value],
-                    metricsId = it[MetricsValueTable.metricsCatalogId],
-                    metricName = it[MetricsCatalogTable.name],
-                    measurementUnit = it[MeasurementUnitsTable.name],
-                    categoryName = it[CategoryMetricTable.name],
-                )
-            }
-
-        val review = ReviewsTable
-            .select { ReviewsTable.medicalConsultationId eq consultationId }
-            .map {
-                Review(
-                    id = it[ReviewsTable.id],
-                    puntuation = it[ReviewsTable.puntuation],
-                    comments = it[ReviewsTable.comments],
-                    date = it[ReviewsTable.date],
-                    medicalConsultationId = it[ReviewsTable.medicalConsultationId]
-                )
-            }
-            .singleOrNull()
-
-        ConsultationComplete(
-            consultation = consultation,
-            notes = notes,
-            metricValues = metricsValue,
-            review = review,
+private suspend fun compareHealthIndicatorsWithRanges(
+    healthIndicators: List<HealthIndicatorsAux>,
+    patientInfo: PatientInfoAux,
+): List<HealthIndicatorComparison> {
+    return healthIndicators.map { indicator ->
+        rangeComparisonService.compareIndicatorWithRanges(
+            value = indicator.value,
+            typeIndicatorId = indicator.typeIndicatorId,
+            genderId = patientInfo.genderId,
+            age = patientInfo.age
         )
     }
+}
+
 }

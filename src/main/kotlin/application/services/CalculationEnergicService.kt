@@ -1,13 +1,20 @@
 package application.services
 
+import application.dto.EnergeticAdjustmentRequestDTO
+import application.dto.EnergeticAdjustmentResponseDTO
 import application.dto.EnergeticExpenditureRequestDTO
 import application.dto.EnergeticExpenditureResponseDTO
+import domain.interfaces.ConsultationAggregateInterface
+import domain.models.ConsultationAggregate
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class CalculationEnergicService {
+class CalculationEnergicService(
+    private val consultationAggregateInterface: ConsultationAggregateInterface
+) {
 
     fun calculateEnergic(
+        energeticAdjustment: EnergeticAdjustmentRequestDTO? = null,
         energeticExpenditure: EnergeticExpenditureRequestDTO,
         peso: BigDecimal,
         talla: BigDecimal,
@@ -16,16 +23,23 @@ class CalculationEnergicService {
         activityFactor: BigDecimal
     ): EnergeticExpenditureResponseDTO {
 
+        var adjustedValue: BigDecimal = BigDecimal.ZERO
+
+        var reductionPercentage: BigDecimal = BigDecimal.ZERO
+
         val bmr = calculateBMR(peso, talla, age, genderId)
 
         val tdee = bmr.multiply(activityFactor).setScale(2, RoundingMode.HALF_UP)
 
-        val reductionPercentage = BigDecimal(energeticExpenditure.reductionPercentage)
-        val adjustedValue = if (reductionPercentage > BigDecimal.ZERO) {
+        if (energeticAdjustment != null) {
+        reductionPercentage = BigDecimal(energeticAdjustment.adjustmentPercentage)
+        adjustedValue = if (reductionPercentage > BigDecimal.ZERO) {
             calculateAdjustedValue(tdee, reductionPercentage)
         } else {
             tdee
         }
+        }
+
 
 
         return EnergeticExpenditureResponseDTO(
@@ -68,5 +82,30 @@ class CalculationEnergicService {
         return tdee.multiply(reductionFactor).setScale(2, RoundingMode.HALF_UP)
     }
 
+    suspend fun applyEnergyAdjustment(request: EnergeticAdjustmentRequestDTO): EnergeticAdjustmentResponseDTO {
+        val adjustmentPercent = request.adjustmentPercentage.toBigDecimalOrNull()
+            ?: return EnergeticAdjustmentResponseDTO(false, "Porcentaje inválido")
 
+
+        val originalValue = request.energyExpenditure.toBigDecimal()
+
+        val reductionFactor = BigDecimal.ONE.subtract(
+            adjustmentPercent.divide(BigDecimal("100"), 4, RoundingMode.HALF_UP)
+        )
+        val adjustedValue = originalValue.multiply(reductionFactor).setScale(2, RoundingMode.HALF_UP)
+
+        val updateSuccess = consultationAggregateInterface.updateEnergyExpenditure(
+            consultationId = request.consultationId,
+            adjustmentPercentage = adjustmentPercent,
+            adjustedValue = adjustedValue
+        )
+
+        return if (updateSuccess.success) {
+            EnergeticAdjustmentResponseDTO(true, "Ajuste aplicado correctamente", adjustedValue.toString())
+        } else {
+            EnergeticAdjustmentResponseDTO(false, "Error al guardar el ajuste")
+        }
+    }
 }
+
+
