@@ -177,7 +177,7 @@ class CreateConsultationUseCase(
             talla = calculationInput.talla,
             age = calculationInput.age,
             genderId = genderId,
-            activityFactor = activityLevel.activityFactor
+            activityFactor = activityLevel.activityFactor,
         )
 
         // Convertir a entidad de dominio

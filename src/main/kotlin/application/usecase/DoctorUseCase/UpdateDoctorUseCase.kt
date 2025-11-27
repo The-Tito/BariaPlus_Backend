@@ -5,7 +5,6 @@ import application.dto.UpdateDoctorRequest
 import application.dto.UpdateDoctorResponse
 import application.services.PasswordService
 import domain.interfaces.DoctorInterface
-import domain.models.ConsultationComplete
 import domain.models.Doctor
 import java.time.LocalDate
 

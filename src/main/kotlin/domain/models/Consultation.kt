@@ -54,12 +54,9 @@ data class ConsultationAggregate(
     val energeticExpenditure: EnergeticExpenditureResponseDTO? = null,
 )
 
-data class ConsultationComplete(
-    val consultation: MedicalConsultation,
-    val notes: List<NoteWithCategory>,
-    val metricValues: List<MetricValueWithCatalog>,
-    val review: Review? = null
-)
+
+
+
 
 /**
 * DTOs para respuestas enriquecidas

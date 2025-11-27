@@ -1,8 +1,10 @@
 package domain.interfaces
 
+import application.dto.ConsultationCompleteResponseDTO
+import application.dto.EnergeticAdjustmentResponseDTO
+import application.services.RangeComparisonService
 import domain.models.Categories
 import domain.models.ConsultationAggregate
-import domain.models.ConsultationComplete
 import domain.models.HealthIndicatorWithType
 import domain.models.HealthIndicators
 import domain.models.MedicalConsultation
@@ -13,6 +15,7 @@ import domain.models.NoteWithCategory
 import domain.models.Notes
 import domain.models.Review
 import domain.models.TypeIndicators
+import java.math.BigDecimal
 
 
 interface ConsultationInterface {
@@ -55,6 +58,9 @@ interface CatalogInterface {
  */
 
 interface ConsultationAggregateInterface {
+    val rangeComparisonService: RangeComparisonService
+
     suspend fun saveConsultationWithDetails(aggregate: ConsultationAggregate): ConsultationAggregate
-    suspend fun findCompleteConsultation(consultationId: Int): ConsultationComplete?
+    suspend fun findCompleteConsultation(consultationId: Int): ConsultationCompleteResponseDTO?
+    suspend fun updateEnergyExpenditure(consultationId: Int, adjustmentPercentage: BigDecimal, adjustedValue: BigDecimal): EnergeticAdjustmentResponseDTO
 }

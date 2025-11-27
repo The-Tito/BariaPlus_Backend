@@ -29,8 +29,7 @@ data class MetricValueRequestDTO(
 
 @Serializable
 data class EnergeticExpenditureRequestDTO(
-    val physicalActivityId: Int,
-    val reductionPercentage: String
+    val physicalActivityId: Int
 )
 
 /**
@@ -50,10 +49,11 @@ data class CreateConsultationResponse(
 
 @Serializable
 data class EnergeticExpenditureResponseDTO(
+    val energeticExpenditureId: Int? = null,
     val physicalActivityId: Int,
     val energyExpenditure: String,
-    val reductionPercentage: String,
-    val energyExpenditureReduction: String,
+    val reductionPercentage: String = "",
+    val energyExpenditureReduction: String = "",
 )
 
 @Serializable
@@ -82,6 +82,32 @@ data class ConsultationInfoDTO(
     val healthIndicatorsCount: Int,
     val metricsCount: Int
 )
+
+/**
+ * Agregar una gasto % de gasto energetico
+ */
+@Serializable
+data class EnergeticAdjustmentRequestDTO(
+    val consultationId: Int,
+    val energyExpenditure: String,
+    val adjustmentPercentage: String
+)
+
+@Serializable
+data class EnergeticAdjustmentResponseDTO(
+    val success: Boolean,
+    val message: String,
+    val adjustedEnergyExpenditure: String? = null
+)
+@Serializable
+data class EnergeticAdjustmentResponse(
+    val consultationId: Int,
+    val energyExpenditure: String,
+    val adjustmentPercentage: String,
+    val adjustedEnergyExpenditure: String? = null
+
+)
+
 
 
 

@@ -13,7 +13,7 @@ object MedicalConsultationsTable : Table("medical_consultations") {
 }
 
 
-object CategoriesTable : Table("categories") {
+object CategoriesTable : Table("note_categories") {
     val id = integer("id").autoIncrement()
     val name = varchar("name", 50)
 
@@ -82,7 +82,7 @@ object MetricsCatalogTable : Table("metrics_catalog") {
     val name = varchar("name", 30)
     val measurementUnitId = integer("measurement_unit_id")
         .references(MeasurementUnitsTable.id)
-    val metricCategoryId = integer("metric_category_id")
+    val metricCategoryId = integer("category_metric_id")
         .references(CategoryMetricTable.id)
 
     override val primaryKey = PrimaryKey(id)

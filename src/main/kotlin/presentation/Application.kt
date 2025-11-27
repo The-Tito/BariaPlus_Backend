@@ -48,7 +48,8 @@ fun Application.module() {
         consultationRoutes(
             content.createConsultationUseCase,
             content.addReviewUseCase,
-            content.consultationAggregateRepository
+            content.consultationAggregateRepository,
+            content.calculationEnergicService
         )
     }
     configureSerialization()
