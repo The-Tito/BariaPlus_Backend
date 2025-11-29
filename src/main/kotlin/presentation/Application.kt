@@ -13,6 +13,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import presentation.routes.authRoutes.authRoutes
 import presentation.routes.consultationRoutes
+import presentation.routes.doctorRoutes
 import presentation.routes.patientRoutes
 
 fun main(args: Array<String>) {
@@ -51,6 +52,7 @@ fun Application.module() {
             content.consultationAggregateRepository,
             content.calculationEnergicService
         )
+        doctorRoutes(content.doctorUseCase)
     }
     configureSerialization()
     configureMonitoring()

@@ -1,9 +1,8 @@
 package presentation.routes
 
-import application.dto.AuthDto.DoctorInfo
 import application.dto.AuthDto.ErrorResponse
 import application.dto.UpdateDoctorRequest
-import application.usecase.DoctorUseCase.UpdateDoctorUseCase
+import application.usecase.DoctorUseCase.DoctorUseCase
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
@@ -13,10 +12,11 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.response.respond
+import io.ktor.server.routing.get
 
 
 fun Route.doctorRoutes(
-    updateDoctorUseCase: UpdateDoctorUseCase,
+    doctorUseCase: DoctorUseCase,
 ) {
     authenticate ("auth-jwt") {
 
@@ -43,7 +43,7 @@ fun Route.doctorRoutes(
 
                         val request = call.receive<UpdateDoctorRequest>()
 
-                        val response = updateDoctorUseCase.execute(doctorIdFromUrl, request)
+                        val response = doctorUseCase.execute(doctorIdFromUrl, request)
 
                         if (response.success) {
                             call.respond(HttpStatusCode.OK, response)
@@ -58,6 +58,30 @@ fun Route.doctorRoutes(
                         )
                     }
                 }
+
+                get("/{id}/reviews") {
+                    val doctorId = call.parameters["id"]?.toIntOrNull()
+
+                    if (doctorId == null) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponse(message = "ID de doctor inválido")
+                        )
+                        return@get
+                    }
+
+                    val response = doctorUseCase.getReviewsByDoctorId(doctorId)
+
+                    if (response.success) {
+                        call.respond(HttpStatusCode.OK, response)
+                    } else {
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ErrorResponse(message = response.message)
+                        )
+                    }
+                }
+
             }
         }
     }

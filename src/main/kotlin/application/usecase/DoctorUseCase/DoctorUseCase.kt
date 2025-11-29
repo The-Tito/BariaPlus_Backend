@@ -1,14 +1,16 @@
 package application.usecase.DoctorUseCase
 
 import application.dto.AuthDto.DoctorInfo
+import application.dto.GetReviewsResponse
 import application.dto.UpdateDoctorRequest
 import application.dto.UpdateDoctorResponse
 import application.services.PasswordService
 import domain.interfaces.DoctorInterface
 import domain.models.Doctor
+import domain.models.Review
 import java.time.LocalDate
 
-class UpdateDoctorUseCase(
+class DoctorUseCase(
     private val doctorInterface: DoctorInterface,
     private val passwordService: PasswordService
 ){
@@ -75,5 +77,21 @@ class UpdateDoctorUseCase(
                 currentWorkplace = savedDoctor.currentWorkplace,
             )
         )
+    }
+
+    suspend fun getReviewsByDoctorId(doctorId: Int): GetReviewsResponse {
+
+            val response = doctorInterface.getReviewsByDoctorId(doctorId)
+        if (!response.success) {
+            return GetReviewsResponse(
+                success = false,
+                message = "No se pudieron obtener las reseñas: ${response.message}",
+                average = "0.0",
+                reviews = emptyList()
+            )
+        }
+
+        return response
+
     }
 }

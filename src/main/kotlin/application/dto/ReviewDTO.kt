@@ -22,3 +22,21 @@ data class ReviewDTO(
     val comments: String,
     val date: String
 )
+
+
+@Serializable
+data class GetReviewsResponse(
+    val success: Boolean,
+    val message: String,
+    val average: String,
+    val reviews: List<ReviewResponse> = emptyList()
+)
+
+@Serializable
+data class ReviewResponse(
+    val id: Int,
+    val name: String,
+    val comments: String,
+    val date: String,
+    val puntuation: Int
+)
