@@ -7,6 +7,7 @@ import application.services.PasswordService
 import application.services.RangeComparisonService
 import application.usecase.AddReviewUseCase
 import application.usecase.CreateConsultationUseCase
+import application.usecase.DoctorUseCase.DoctorUseCase
 import application.usecase.PatientUseCase
 import application.usecase.DoctorUseCase.LoginDoctorUseCase
 import application.usecase.DoctorUseCase.RegisterDoctorUseCase
@@ -57,5 +58,6 @@ class DependencyContent(
     )
     val addReviewUseCase = AddReviewUseCase(reviewRepository, consultationInterface )
     val getPatientsFilteredUseCase = GetPatientsFilteredUseCase(patientRepository)
+    val doctorUseCase = DoctorUseCase(doctorRepository, passwordService)
 //    val getCatalogsUseCase = GetCatalogsUseCase(catalogRepository)
 }
