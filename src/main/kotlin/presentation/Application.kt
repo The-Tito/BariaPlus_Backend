@@ -40,11 +40,17 @@ fun Application.module() {
 
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
-        allowHeader(HttpHeaders.AccessControlAllowOrigin)
 
+        // Origen del front en S3
+        allowHost(
+            host = "amzn-bariaplus-front-01.s3-website-us-east-1.amazonaws.com",
+            schemes = listOf("http")
+        )
+
+        // (opcional, mientras pruebas) permitir todo:
+        // anyHost()
 
         allowCredentials = true
-        exposeHeader(HttpHeaders.SetCookie)
     }
 
 

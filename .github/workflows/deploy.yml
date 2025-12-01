@@ -86,7 +86,6 @@ jobs:
 
             sudo systemctl start postgresql || true
             sleep 5
-            sudo -u postgres psql -d "${{ secrets.DB_NAME }}" -f /opt/apps/backend/db/schema.sql || true
 
             sudo systemctl daemon-reload
             sudo systemctl start myapp.service
