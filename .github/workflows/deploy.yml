@@ -36,7 +36,7 @@ jobs:
               run: ./gradlew clean shadowjar
 
             - name: Print generated JAR path
-              run: find app/build/libs -name "*.jar" -print
+              run: find build/libs -name "*.jar" -print
 
             - name: Move JAR to root for SCP
               id: move_jar # Asignamos un ID a este paso para referenciar sus salidas
