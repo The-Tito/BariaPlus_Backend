@@ -39,8 +39,29 @@ jobs:
           mv "$JAR_FULL_PATH" "$JAR_FILENAME"
           echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Deploy to EC2 (Clean + Copy + Restart)
-        uses: appleboy/ssh-action@v1.0.3
+      # ✅ COPIAR JAR PRIMERO
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "app.jar"
+          target: "/tmp/"
+
+      # ✅ COPIAR DB Y SCRIPTS
+      - name: Copy db and scripts to EC2
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "db/schema.sql,scripts/*"
+          target: "/tmp/"
+
+      # ✅ DESPLEGAR TODO
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -49,9 +70,13 @@ jobs:
             sudo rm -rf /opt/apps/backend/*
             sudo mkdir -p /opt/apps/backend/{db,scripts}
             sudo systemctl stop myapp.service || true
+            
+            # ✅ MOVER ARCHIVOS DESDE /tmp/
             sudo cp /tmp/app.jar /opt/apps/backend/
-            sudo cp db/schema.sql /opt/apps/backend/ || true
-            sudo cp scripts/* /opt/apps/backend/scripts/ || true
+            sudo cp /tmp/schema.sql /opt/apps/backend/db/ || true
+            sudo cp /tmp/*.sh /opt/apps/backend/scripts/ || true
+            
+            # ✅ .env CON SECRETS REALES
             sudo tee /opt/apps/backend/.env > /dev/null << EOF
             DB_NAME=${{ secrets.DBNAME }}
             DB_URL=jdbc:postgresql://127.0.0.1:5432/${{ secrets.DBNAME }}
@@ -60,6 +85,10 @@ jobs:
             SECRET=${{ secrets.JWTSECRET }}
             ISSUER=${{ secrets.JWTISSUER }}
             EOF
+            
             sudo chown -R ubuntu:ubuntu /opt/apps/backend/
+            sudo chmod +x /opt/apps/backend/scripts/*
+            sudo systemctl daemon-reload
             sudo systemctl start myapp.service
-            sudo systemctl status myapp.service
+            sleep 5
+            sudo journalctl -u myapp.service -n 20 --no-pager
