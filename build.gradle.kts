@@ -13,10 +13,15 @@ application {
 
 dependencies {
     implementation(libs.ktor.server.core)
+
+//    Content negotiation
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+//    Call logging
     implementation(libs.ktor.server.call.logging)
+
     implementation(libs.ktor.server.resources)
+//    Defaults
     implementation(libs.ktor.server.netty)
     implementation(libs.logback.classic)
     testImplementation(libs.ktor.server.test.host)
@@ -28,6 +33,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:0.44.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.44.1")
     implementation("org.jetbrains.exposed:exposed-java-time:0.44.1")
+
+
     implementation("com.zaxxer:HikariCP:5.1.0")
 
     // JWT Authentication

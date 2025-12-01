@@ -255,7 +255,6 @@ class PatientAggregateRepositoryImpl: PatientAggregateInterface {
                     doctorId = aggregate.patient.doctorId,
                     genderId = aggregate.patient.genderId,
                     dateOfBirth = aggregate.patient.dateOfBirth,
-
                     )
             } catch (e: Exception) {
                 // Si algo falla, Exposed hace rollback automático
