@@ -1,9 +1,7 @@
 name: Deploy Java App to Amazon EC2
-
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       branch:
@@ -14,14 +12,13 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch || github.ref }}
 
-      - name: Setup on jdk 21
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: microsoft
@@ -34,65 +31,71 @@ jobs:
       - name: Build with Gradle and Shadowjar
         run: ./gradlew clean shadowjar
 
-      - name: Print generated JAR path
-        run: find build/libs -name "*.jar" -print
-
       - name: Move and Rename JAR to app.jar
         id: move_jar
         run: |
           JAR_FULL_PATH=$(find build/libs -name "BariaPlus-*.jar" | head -n 1)
-          JAR_FILENAME="app.jar" 
+          JAR_FILENAME="app.jar"
           mv "$JAR_FULL_PATH" "$JAR_FILENAME"
-          echo "JAR movido y renombrado a: $JAR_FILENAME"
           echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Execute pre-deployment script on EC2 (Stop old app)
+      # ✅ LIMPIAR PRIMERO (antes de pre-deploy)
+      - name: Clean backend directory
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-          script: |
-            sudo /opt/apps/backend/scripts/pre-deploy
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        script: |
+          sudo rm -rf /opt/apps/backend/*
+          sudo mkdir -p /opt/apps/backend/{db,scripts}
 
+      # ✅ Pre-deploy DESPUÉS de limpiar
+      - name: Execute pre-deployment script
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        script: sudo /opt/apps/backend/scripts/pre-deploy
+
+      # ✅ Copy JAR
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v1
         with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "${{ steps.move_jar.outputs.moved_jar_filename }}"
           target: "/opt/apps/backend/"
 
-      - name: Copy database schema to EC2
+      # ✅ Copy archivos adicionales
+      - name: Copy db and scripts
         uses: appleboy/scp-action@v1
         with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-          source: "db/schema.sql"
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "db/schema.sql,scripts/*"
           target: "/opt/apps/backend/"
 
-      - name: Copy database setup script to EC2
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-          source: "scripts/setup_database_on_ec2.sh"
-          target: "/opt/apps/backend/"
-
-      - name: Execute post-deployment script on EC2 (Setup DB & Restart app)
+      # ✅ Post-deploy con variables CORRECTAS
+      - name: Execute post-deployment script
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-          envs: DB_NAME,DB_USERNAME,DB_PASSWORD,JWT_SECRET,JWT_ISSUER
-          script: |
-            export DB_NAME="${{secrets.DB_NAME}}"
-            export DB_USERNAME="${{secrets.DB_USERNAME}}"
-            export DB_PASSWORD="${{secrets.DB_PASSWORD}}"
-            export JWT_SECRET="${{secrets.JWT_SECRET}}"
-            export JWT_ISSUER="${{secrets.JWT_ISSUER}}"
-            sudo -E /opt/apps/backend/scripts/post-deploy
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        env:
+          DBNAME: ${{ secrets.DBNAME }}
+          DBUSERNAME: ${{ secrets.DBUSERNAME }}
+          DBPASSWORD: ${{ secrets.DBPASSWORD }}
+          JWTSECRET: ${{ secrets.JWTSECRET }}
+          JWTISSUER: ${{ secrets.JWTISSUER }}
+        script: |
+          export DBNAME=$DBNAME
+          export DBUSERNAME=$DBUSERNAME
+          export DBPASSWORD=$DBPASSWORD
+          export JWTSECRET=$JWTSECRET
+          export JWTISSUER=$JWTISSUER
+          sudo -E /opt/apps/backend/scripts/post-deploy
