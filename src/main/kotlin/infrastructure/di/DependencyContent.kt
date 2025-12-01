@@ -22,8 +22,6 @@ import infrastructure.repositories.RangeDetailRepository
 import infrastructure.repositories.ReviewRepositoryImpl
 
 class DependencyContent(
-
-
     ) {
     val rangeDetailRepository = RangeDetailRepository()
     val rangeComparationService = RangeComparisonService(rangeDetailRepository)

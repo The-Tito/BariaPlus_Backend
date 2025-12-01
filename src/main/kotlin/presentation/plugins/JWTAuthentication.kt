@@ -44,36 +44,3 @@ data class ErrorResponse(
     val message: String
 )
 
-//    install(Authentication) {
-//        jwt ("jwt-auth"){
-//            realm = config.realm
-//            val jwtVerifier = JWT
-//                .require(Algorithm.HMAC256(config.secret))
-//                .withAudience(config.audience)
-//                .withIssuer(config.issuer)
-//                .build()
-//
-//            verifier(jwtVerifier)
-//
-//            validate { credential ->
-//                val username = credential.payload.getClaim("username").asString()
-//                if (username.isNullOrBlank()) {
-//                    JWTPrincipal(credential.payload)
-//                }else{
-//                    null
-//                }
-//            }
-//
-//            challenge { _, _ ->
-//                call.respondText("Token es no valido o ha expirado", status = HttpStatusCode.Unauthorized) }
-//
-//        }
-//    }
-//
-//data class JWTConfig(
-//    val realm: String,
-//    val secret: String,
-//    val issuer: String,
-//    val audience: String,
-//    val tokenExpiry: Long,
-//)

@@ -54,6 +54,7 @@ fun Application.module() {
         )
         doctorRoutes(content.doctorUseCase)
     }
+
     configureSerialization()
     configureMonitoring()
     configureRouting()

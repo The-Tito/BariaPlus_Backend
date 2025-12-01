@@ -41,7 +41,7 @@ jobs:
             - name: Move JAR to root for SCP
               id: move_jar # Asignamos un ID a este paso para referenciar sus salidas
               run: |
-                JAR_FULL_PATH=$(find app/build/libs -name "app_chida-*.jar" | head -n 1)
+                JAR_FULL_PATH=$(find build/libs -name "app_chida-*.jar" | head -n 1)
                 JAR_FILENAME=$(basename "$JAR_FULL_PATH")
                 mv "$JAR_FULL_PATH" "$JAR_FILENAME"
                 echo "JAR movido a la raíz: $JAR_FILENAME"
