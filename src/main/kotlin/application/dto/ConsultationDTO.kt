@@ -22,7 +22,10 @@ data class MedicalConsultationResponse(
     val id: Int? = null,
     val date: String,
     val reason: String,
-    val medicalRecordId: Int
+    val medicalRecordId: Int,
+    val genderId: Int,
+    val firstName: String,
+    val lastName: String
 )
 
 @Serializable

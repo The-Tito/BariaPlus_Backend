@@ -17,6 +17,8 @@ import kotlinx.serialization.Serializable
 
 fun Application.configureJWTAuthentication(content: DependencyContent) {
 
+
+
     install(Authentication) {
         jwt("auth-jwt") {
             verifier(content.jwtService.createVerifier())
