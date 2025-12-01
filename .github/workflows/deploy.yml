@@ -39,9 +39,8 @@ jobs:
           mv "$JAR_FULL_PATH" "$JAR_FILENAME"
           echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
 
-      # ✅ v0.1.10 ESTABLE - usa script:
-      - name: Clean backend directory
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Deploy to EC2 (Clean + Copy + Restart)
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -49,51 +48,18 @@ jobs:
           script: |
             sudo rm -rf /opt/apps/backend/*
             sudo mkdir -p /opt/apps/backend/{db,scripts}
-
-      - name: Execute pre-deployment script
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            sudo /opt/apps/backend/scripts/pre-deploy
-
-      - name: Copy JAR to EC2
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "${{ steps.move_jar.outputs.moved_jar_filename }}"
-          target: "/opt/apps/backend/"
-
-      - name: Copy db and scripts
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "db/schema.sql,scripts/*"
-          target: "/opt/apps/backend/"
-
-      # ✅ v0.1.10: script ANTES de env
-      - name: Execute post-deployment script
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-        env:
-          DBNAME: ${{ secrets.DBNAME }}
-          DBUSERNAME: ${{ secrets.DBUSERNAME }}
-          DBPASSWORD: ${{ secrets.DBPASSWORD }}
-          JWTSECRET: ${{ secrets.JWTSECRET }}
-          JWTISSUER: ${{ secrets.JWTISSUER }}
-        script: |
-          export DBNAME=$DBNAME
-          export DBUSERNAME=$DBUSERNAME
-          export DBPASSWORD=$DBPASSWORD
-          export JWTSECRET=$JWTSECRET
-          export JWTISSUER=$JWTISSUER
-          sudo -E /opt/apps/backend/scripts/post-deploy
+            sudo systemctl stop myapp.service || true
+            sudo cp /tmp/app.jar /opt/apps/backend/
+            sudo cp db/schema.sql /opt/apps/backend/ || true
+            sudo cp scripts/* /opt/apps/backend/scripts/ || true
+            sudo tee /opt/apps/backend/.env > /dev/null << EOF
+            DB_NAME=${{ secrets.DBNAME }}
+            DB_URL=jdbc:postgresql://127.0.0.1:5432/${{ secrets.DBNAME }}
+            DB_USER=${{ secrets.DBUSERNAME }}
+            DB_PASSWORD=${{ secrets.DBPASSWORD }}
+            SECRET=${{ secrets.JWTSECRET }}
+            ISSUER=${{ secrets.JWTISSUER }}
+            EOF
+            sudo chown -R ubuntu:ubuntu /opt/apps/backend/
+            sudo systemctl start myapp.service
+            sudo systemctl status myapp.service
