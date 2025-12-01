@@ -39,24 +39,24 @@ jobs:
           mv "$JAR_FULL_PATH" "$JAR_FILENAME"
           echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
 
-      # ✅ v1.0.3 usa script_commands
+      # ✅ v0.1.10 ESTABLE - usa script:
       - name: Clean backend directory
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script_commands: |
+          script: |
             sudo rm -rf /opt/apps/backend/*
             sudo mkdir -p /opt/apps/backend/{db,scripts}
 
       - name: Execute pre-deployment script
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script_commands: |
+          script: |
             sudo /opt/apps/backend/scripts/pre-deploy
 
       - name: Copy JAR to EC2
@@ -77,9 +77,9 @@ jobs:
           source: "db/schema.sql,scripts/*"
           target: "/opt/apps/backend/"
 
-      # ✅ v1.0.3: script_commands ANTES de env
+      # ✅ v0.1.10: script ANTES de env
       - name: Execute post-deployment script
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -90,7 +90,7 @@ jobs:
           DBPASSWORD: ${{ secrets.DBPASSWORD }}
           JWTSECRET: ${{ secrets.JWTSECRET }}
           JWTISSUER: ${{ secrets.JWTISSUER }}
-        script_commands: |
+        script: |
           export DBNAME=$DBNAME
           export DBUSERNAME=$DBUSERNAME
           export DBPASSWORD=$DBPASSWORD
