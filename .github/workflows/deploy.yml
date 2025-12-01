@@ -38,19 +38,12 @@ jobs:
         run: find build/libs -name "*.jar" -print
 
       - name: Move and Rename JAR to app.jar
-        id: move_jar # Asignamos un ID a este paso para referenciar sus salidas
+        id: move_jar
         run: |
-          # 1. Encuentra el JAR con el nombre real de tu proyecto
           JAR_FULL_PATH=$(find build/libs -name "BariaPlus-*.jar" | head -n 1)
-          
-          # 2. Define el nombre fijo que espera el servicio Systemd en EC2
           JAR_FILENAME="app.jar" 
-          
-          # 3. Mueve el JAR encontrado a la raíz del runner Y lo renombra a app.jar
           mv "$JAR_FULL_PATH" "$JAR_FILENAME"
           echo "JAR movido y renombrado a: $JAR_FILENAME"
-          
-          # 4. Exporta el nombre fijo para el paso SCP
           echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
 
       - name: Execute pre-deployment script on EC2 (Stop old app)
@@ -60,7 +53,6 @@ jobs:
           username: ${{secrets.EC2_USER}}
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
           script: |
-            # Ejecuta el script para detener y limpiar el directorio
             sudo /opt/apps/backend/scripts/pre-deploy
 
       - name: Copy JAR to EC2
@@ -69,16 +61,38 @@ jobs:
           host: ${{secrets.EC2_HOST}}
           username: ${{secrets.EC2_USER}}
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-          # El archivo de origen es ahora el nombre fijo "app.jar"
           source: "${{ steps.move_jar.outputs.moved_jar_filename }}"
           target: "/opt/apps/backend/"
 
-      - name: Execute post-deployment script on EC2 (Restart app and configure systemd)
+      - name: Copy database schema to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ${{secrets.EC2_USER}}
+          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          source: "db/schema.sql"
+          target: "/opt/apps/backend/"
+
+      - name: Copy database setup script to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ${{secrets.EC2_USER}}
+          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          source: "scripts/setup_database_on_ec2.sh"
+          target: "/opt/apps/backend/"
+
+      - name: Execute post-deployment script on EC2 (Setup DB & Restart app)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{secrets.EC2_HOST}}
           username: ${{secrets.EC2_USER}}
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          envs: DB_NAME,DB_USERNAME,DB_PASSWORD,JWT_SECRET,JWT_ISSUER
           script: |
-            # Ejecuta el script para iniciar y verificar el estado del servicio
-            sudo /opt/apps/backend/scripts/post-deploy
+            export DB_NAME="${{secrets.DB_NAME}}"
+            export DB_USERNAME="${{secrets.DB_USERNAME}}"
+            export DB_PASSWORD="${{secrets.DB_PASSWORD}}"
+            export JWT_SECRET="${{secrets.JWT_SECRET}}"
+            export JWT_ISSUER="${{secrets.JWT_ISSUER}}"
+            sudo -E /opt/apps/backend/scripts/post-deploy
