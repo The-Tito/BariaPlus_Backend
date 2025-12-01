@@ -32,14 +32,10 @@ jobs:
         run: ./gradlew clean shadowjar
 
       - name: Move and Rename JAR to app.jar
-        id: move_jar
         run: |
           JAR_FULL_PATH=$(find build/libs -name "BariaPlus-*.jar" | head -n 1)
-          JAR_FILENAME="app.jar"
-          mv "$JAR_FULL_PATH" "$JAR_FILENAME"
-          echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
+          mv "$JAR_FULL_PATH" app.jar
 
-      # ✅ COPIAR JAR PRIMERO
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.0
         with:
@@ -49,46 +45,51 @@ jobs:
           source: "app.jar"
           target: "/tmp/"
 
-      # ✅ COPIAR DB Y SCRIPTS
-      - name: Copy db and scripts to EC2
+      - name: Copy schema.sql to EC2
         uses: appleboy/scp-action@v0.1.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "db/schema.sql,scripts/*"
+          source: "db/schema.sql"
           target: "/tmp/"
 
-      # ✅ DESPLEGAR TODO
-      - name: Deploy to EC2
+      - name: Deploy and setup
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            sudo rm -rf /opt/apps/backend/*
-            sudo mkdir -p /opt/apps/backend/{db,scripts}
             sudo systemctl stop myapp.service || true
-            
-            # ✅ MOVER ARCHIVOS DESDE /tmp/
-            sudo cp /tmp/app.jar /opt/apps/backend/
-            sudo cp /tmp/schema.sql /opt/apps/backend/db/ || true
-            sudo cp /tmp/*.sh /opt/apps/backend/scripts/ || true
-            
-            # ✅ .env CON SECRETS REALES
-            sudo tee /opt/apps/backend/.env > /dev/null << EOF
-            DB_NAME=${{ secrets.DBNAME }}
-            DB_URL=jdbc:postgresql://127.0.0.1:5432/${{ secrets.DBNAME }}
-            DB_USER=${{ secrets.DBUSERNAME }}
-            DB_PASSWORD=${{ secrets.DBPASSWORD }}
-            SECRET=${{ secrets.JWTSECRET }}
-            ISSUER=${{ secrets.JWTISSUER }}
+
+            sudo rm -rf /opt/apps/backend/*
+            sudo mkdir -p /opt/apps/backend/db
+
+            sudo cp /tmp/app.jar /opt/apps/backend/app.jar
+            sudo cp /tmp/schema.sql /opt/apps/backend/db/schema.sql
+
+            sudo tee /opt/apps/backend/.env > /dev/null << 'EOF'
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_URL=jdbc:postgresql://127.0.0.1:5432/${{ secrets.DB_NAME }}
+            DB_USER=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            SECRET=${{ secrets.JWT_SECRET }}
+            ISSUER=${{ secrets.JWT_ISSUER }}
             EOF
-            
-            sudo chown -R ubuntu:ubuntu /opt/apps/backend/
-            sudo chmod +x /opt/apps/backend/scripts/*
+
+            sudo chown -R ubuntu:ubuntu /opt/apps/backend
+            sudo chmod 644 /opt/apps/backend/app.jar
+            sudo chmod 600 /opt/apps/backend/.env
+
+            sudo systemctl start postgresql || true
+            sleep 5
+            sudo -u postgres psql -d "${{ secrets.DB_NAME }}" -f /opt/apps/backend/db/schema.sql || true
+
             sudo systemctl daemon-reload
             sudo systemctl start myapp.service
-            sleep 5
-            sudo journalctl -u myapp.service -n 20 --no-pager
+            sleep 10
+
+            sudo systemctl status myapp.service --no-pager -l || true
+            sudo ss -tlnp | grep 8080 || true
+            curl -v http://localhost:8080/health || true
