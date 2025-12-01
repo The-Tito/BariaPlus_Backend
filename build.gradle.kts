@@ -46,5 +46,8 @@ dependencies {
     // ENV
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 
+//    Cors
+    implementation("io.ktor:ktor-server-cors:2.3.4")
+
 
 }

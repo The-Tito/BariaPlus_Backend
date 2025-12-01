@@ -7,7 +7,10 @@ import com.AntonioSelvas.plugins.plugins.configureJWTAuthentication
 import infrastructure.database.DatabaseConfig
 import infrastructure.database.DatabaseFactory
 import infrastructure.di.DependencyContent
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.server.application.*
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
@@ -26,6 +29,23 @@ fun Application.module() {
 
 
     val content = DependencyContent()
+
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Patch)
+
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.AccessControlAllowOrigin)
+
+
+        allowCredentials = true
+        exposeHeader(HttpHeaders.SetCookie)
+    }
 
 
     configureJWTAuthentication(content)

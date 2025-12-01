@@ -33,6 +33,7 @@ import infrastructure.database.tables.NotesTable
 import infrastructure.database.tables.PatientsTable
 import infrastructure.database.tables.ReviewsTable
 import infrastructure.database.tables.TypeIndicatorsTable
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -116,7 +117,11 @@ class ConsultationAggregateRepositoryImpl(
 
     override suspend fun findCompleteConsultation(consultationId: Int): ConsultationCompleteResponseDTO? = dbQuery {
         try {
-            val consultation = MedicalConsultationsTable
+            val consultation = (MedicalConsultationsTable
+                .join(MedicalRecordsTable, JoinType.INNER,
+                    MedicalConsultationsTable.medicalRecordId, MedicalRecordsTable.id)
+                .join(PatientsTable, JoinType.INNER,
+                    MedicalRecordsTable.patientId, PatientsTable.id))  // ← FK explícita
                 .select { MedicalConsultationsTable.id eq consultationId }
                 .map {
                     MedicalConsultationResponse(
@@ -124,9 +129,11 @@ class ConsultationAggregateRepositoryImpl(
                         date = it[MedicalConsultationsTable.date].toString(),
                         reason = it[MedicalConsultationsTable.reason],
                         medicalRecordId = it[MedicalConsultationsTable.medicalRecordId],
+                        genderId = it[PatientsTable.genderId],
+                        firstName = it[PatientsTable.firstName],
+                        lastName = it[PatientsTable.lastName]
                     )
-                }
-                .singleOrNull() ?: return@dbQuery null
+                }.singleOrNull() ?: return@dbQuery null
 
             val healthIndicators = (HealthIndicatorsTable innerJoin TypeIndicatorsTable)
                 .select {  HealthIndicatorsTable.medicalConsultationId eq consultationId }
