@@ -45,17 +45,6 @@ jobs:
           source: "app.jar"
           target: "/tmp/"
 
-      - name: Copy schema.sql to EC2
-        uses: appleboy/scp-action@v0.1.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "db/schema.sql"
-          target: "/tmp/schema.sql"
-          strip_components: 1
-
-
       - name: Deploy and setup
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -65,11 +54,8 @@ jobs:
           script: |
             sudo systemctl stop myapp.service || true
 
-            sudo rm -rf /opt/apps/backend/*
-            sudo mkdir -p /opt/apps/backend/db
-
+            sudo rm -f /opt/apps/backend/app.jar
             sudo cp /tmp/app.jar /opt/apps/backend/app.jar
-            sudo cp /tmp/schema.sql /opt/apps/backend/db/schema.sql
 
             sudo tee /opt/apps/backend/.env > /dev/null << 'EOF'
             DB_NAME=${{ secrets.DB_NAME }}
